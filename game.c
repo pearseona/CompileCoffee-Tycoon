@@ -209,6 +209,26 @@ int main(int argc, char* argv[]) {
 			if (ev.type == SDL_QUIT) {
 				isRunning = false;
 			}
+
+			// 키보드 입력 이벤트 처리
+			else if (ev.type == SDL_KEYDOWN) {
+				switch (ev.key.keysym.sym) {
+					case SDLK_1: // 숫자 1을 누르면 아메리카노 강제 판매
+						if (myGame.state == STATE_PLAYING) {
+								myGame.day_revenue += 4000;
+								myGame.balance += 4000;
+								myGame.combo++;
+								myGame.combo_timer = SDL_GetTicks(); // 콤보 타이머 리셋
+								log_push(&myGame, "아메리카노 판매 성공! (+4,000d원) ");
+								printf("커피 판매! 현재 잔액: %d원 | 콤보: %d\n", myGame.balance, myGame.combo);
+						}
+						break;
+
+					case SDLK_ESCAPE: // ESC 누르면 즉시 종료
+							isRunning = false;
+							break;
+				}
+			}
 		}
 
 		Uint32 currentTime = SDL_GetTicks();
