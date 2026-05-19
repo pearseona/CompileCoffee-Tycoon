@@ -153,3 +153,30 @@ int clamp_i(int v, int lo, int hi) {
 	if (v > hi) return hi; // 최대치로 고정
 	return v;
 }
+
+
+/* 프로그램의 실제 시작점 */
+int main(int argc, char* argv[]) {
+
+	// SDL 타이머 시스템 초기화
+	if (SDL_Init(SDL_INIT_TIMER) < 0) {
+		printf("SDL 초기화 실패: %s\n", SDL_GetError());
+		return -1;
+	}
+
+	Game myGame;
+	game_init(&MyGame); // 첫 자본금 및 리시피 세팅
+	game_start_day(&myGame); // Day 1 영업 강제 개시
+
+	Uint32 lastTime = SDL_GetTicks(); // 이전 프레임의 시간 기록
+	bool isRunning = true;
+
+	printf("실시간 엔진 루프를 가동합니다. (종료하려면 Ctrl + C) \n");
+	SDL_Delay(1000); // 가동 전 1초 대기
+
+	// 메인 게임 루프
+	while (isRunning) {
+		Unit32 currentTime = SDL_GetTicks();
+		Unit32 dt = currentTime - 
+	}
+}

@@ -1,8 +1,7 @@
 // 공통 데이터 정의 묘듈
-#ifdef COMMON_H
+#ifndef COMMON_H
 #define COMMON_H
 
-#include <stdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +41,7 @@ typedef enum {
 // 메뉴 ID
 typedef enum {
     MENU_AMERICANO = 0,
-    MUNU_LATTE,
+    MENU_LATTE,
     MENU_VANILLA_LATTE,
     MENU_COLD_BREW,
     MENU_CARAMEL_MAC,
@@ -59,14 +58,14 @@ typedef enum {
 } IngID;
 
 // 손님 성향 유형
-typdef enum {
+typedef enum {
     CUST_WORKER = 0, // 직장인: 성격 급함
     CUST_FOODIE, // 미식가: 고급 메뉴 요구, 높은 팁
     CUST_STUDENT // 학생: 할인 적용
 }CustType;
 
 // 제조 슬롯의 실시간 상태
-typdef enum {
+typedef enum {
     SLOT_EMPTY = 0,
     SLOT_BREWING,
     SLOT_DONE
@@ -85,7 +84,7 @@ typedef struct {
 } MenuInfo;
 
 // 손님 구조체
-typdef struct {
+typedef struct {
     int id;
     CustType type;
     MenuID order;
@@ -114,7 +113,7 @@ typedef struct {
 } Upgrade;
 
 // 일별 재정/운영 기록 데이터 구조체 (파일 I/O)
-typdef struct {
+typedef struct {
     int day, revenue, expenditure, profit;
     int served, left, max_combo;
 } DayRecord;
@@ -129,7 +128,7 @@ typedef struct {
 
     // 실시간 타이머 및 스폰 시스템
     int day_ms;
-    Unit32 last_tick;
+    Uint32 last_tick;
     int spawn_timer_ms;
 
     // 큐 관리
@@ -137,7 +136,7 @@ typedef struct {
     int q_head, q_tail, q_size, next_id;
 
     // 워크스테이션 제조 슬롯
-    BrewSlot slots[MAX _BREW_SLOTS];
+    BrewSlot slots[MAX_BREW_SLOTS];
     int slot_count;
 
     // 원자재 재고 창고
@@ -145,41 +144,41 @@ typedef struct {
 
     // 다이내믹 콤보 시스템
     int combo, max_combo;
-    Unit32 combo_timer;
+    Uint32 combo_timer;
 
     // 업그레이드 트리
-    Ugrade upg[6];
+    Upgrade upg[6];
 
     // 영속 저쟝용 데이터 배열
     DayRecord records[MAX_DAYS];
     int total_served, total_left;
 
     // 인터랙션 유선 UI 선택 상태 값
-    int sel_slot, sel_cust, sel_munu;
+    int sel_slot, sel_cust, sel_menu;
     int show_recipe;
 
     // 이벤트 NPS 관련 데이터
-    int insepctor_day, influencer_day;
+    int inspector_day, influencer_day;
     char event_msg[128];
-    Unit32 event_ms;
+    Uint32 event_ms;
 
     // 튜토리얼 시스템
     int tutorial_page;
 
     // 화면 HUD 실시간 로그 피드백
     char log_lines[LOG_MAX][80];
-    Unit32 log_ttl[LOG_MAX]l
+    Uint32 log_ttl[LOG_MAX];
     int log_count;
 
     // 애니메이션 동기화용 틱
-    Unit32 anim_tick;
+    Uint32 anim_tick;
 
 } Game;
 
 /* 전역 데이터 선언 */
 extern MenuInfo g_menu[MAX_MENU];
 extern const char* g_ing_name[MAX_INGREDIENT];
-extern const_char* g_cust_name[3];
+extern const char* g_cust_name[3];
 
 /* 프로토타입 선언 */
 
@@ -191,17 +190,17 @@ void game_update(Game* g, Uint32 dt);
 
 // customer.c
 void cust_spawn(Game* g);
-void cust_update(Game* g, Unit32 dt);
+void cust_update(Game* g, Uint32 dt);
 Customer* cust_at(Game* g, int qi);
 void cust_serve(Game* g, int slot_idx);
 
 // brew.c
 void brew_start(Game* g, int slot_idx, int qi, MenuID menu);
-void brew_update(Game* g, Unit32 dt);
+void brew_update(Game* g, Uint32 dt);
 void brew_cancel(Game* g, int slot_idx);
 
 // upgrade.c
-void upg.init(Game* g);
+void upg_init(Game* g);
 void upg_buy(Game* g, int idx);
 
 // save.c
