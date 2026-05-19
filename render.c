@@ -1,8 +1,10 @@
 // SDL2 전체 렌더링
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <stdlib.h>
 #include "common.h"
 
-void render_frame(SDL_Render* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Font* fnt_sm, Game* g) {
+void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Font* fnt_sm, Game* g) {
 
 	system("cls");
     printf("==================================================\n");

@@ -1,7 +1,9 @@
 // 게임의 메인 시작점
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "common.h"
 
 MenuInfo g_menu[MAX_MENU];
@@ -165,7 +167,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	Game myGame;
-	game_init(&MyGame); // 첫 자본금 및 리시피 세팅
+	game_init(&myGame); // 첫 자본금 및 리시피 세팅
 	game_start_day(&myGame); // Day 1 영업 강제 개시
 
 	Uint32 lastTime = SDL_GetTicks(); // 이전 프레임의 시간 기록
@@ -176,7 +178,26 @@ int main(int argc, char* argv[]) {
 
 	// 메인 게임 루프
 	while (isRunning) {
-		Unit32 currentTime = SDL_GetTicks();
-		Unit32 dt = currentTime - 
+		Uint32 currentTime = SDL_GetTicks();
+		Uint32 dt = currentTime - lastTime; // 이전 프레임과 현재 프레임 사이의 시간 차이
+
+		if (dt >= FRAME_DELAY) {
+
+			// 게임 내부 타이머 및 시스템 업데이트
+			game_update(&myGame, dt);
+
+			// 임시 화면 출력
+			render_frame(NULL, NULL, NULL, NULL, &myGame);
+
+			// 만약 시간이 다 되어서 마감 상태로 넘어가면 하루 루프 종료
+			if (myGame.state == STATE_CLOSING) {
+				printf("\n 하루 90초 영업이 무사히 마감되었습니다!\n");
+				isRunning = false;
+			}
+			lastTime = currentTime; // 시간 갱신
+		}
+
+		SDL_Delay(1);
 	}
+	SDL_Quit();
 }

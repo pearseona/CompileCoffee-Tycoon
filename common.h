@@ -2,6 +2,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +21,7 @@
 #define MAX_BREW_SLOTS 3 // 업그레이드 가능한 제조 슬롯
 #define MAX_MENU 6 // 아메리카노, 라떼 등 메뉴 6종
 #define MAX_INGREDIENT 5 // 원두, 우유, 시럽, 크림, 얼음
-#define MAX_DAYS 30 // 총 플레이 타임라인 20일
+#define MAX_DAYS 30 // 총 플레이 타임라인 30일
 #define DAY_SEC 90 // 하루 영업 시간; 실시간 90초
 #define COMBO_TIMEOUT_MS 8000 // 콤보 유지 시간 제한 (8초)
 #define LOG_MAX 6 // 인게임 HUD에 노출할 최근 로그 수
