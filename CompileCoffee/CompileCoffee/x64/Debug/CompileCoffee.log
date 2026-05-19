@@ -1,5 +1,2 @@
-﻿  render.c
-  save.c
-  upgrade.c
-  코드를 생성하고 있습니다...
-  CompileCoffee.vcxproj -> C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCafe\CompileCoffee-Tycoon\CompileCoffee\x64\Debug\CompileCoffee.exe
+﻿  game.c
+  CompileCoffee.vcxproj -> C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\CompileCoffee\x64\Debug\CompileCoffee.exe

@@ -160,24 +160,57 @@ int clamp_i(int v, int lo, int hi) {
 /* 프로그램의 실제 시작점 */
 int main(int argc, char* argv[]) {
 
-	// SDL 타이머 시스템 초기화
-	if (SDL_Init(SDL_INIT_TIMER) < 0) {
+	// SDL 시스템 초기화 (타이머 + 비디오)
+	if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) < 0) {
 		printf("SDL 초기화 실패: %s\n", SDL_GetError());
 		return -1;
 	}
+
+	// 폰트 초기화
+	if (TTF_Init() < 0) {
+		printf("TTF 초기화 실패: %s\n", TTF_GetError());
+		return -1;
+	}
+
+	// 윈도우 창 생성
+	SDL_Window* win = SDL_CreateWindow(
+		"[Compile Coffee]",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		SCREEN_W, SCREEN_H, SDL_WINDOW_SHOWN
+	);
+
+	if (!win) {
+		printf("윈도우 생성 실패: %s\n", SDL_GetError());
+		TTF_Quit();
+		SDL_Quit();
+		return -1;
+	}
+
+	SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
 
 	Game myGame;
 	game_init(&myGame); // 첫 자본금 및 리시피 세팅
 	game_start_day(&myGame); // Day 1 영업 강제 개시
 
+	printf("그래픽 실행 완료! \n");
+
+	SDL_Delay(1000); // 가동 전 1초 대기
+
 	Uint32 lastTime = SDL_GetTicks(); // 이전 프레임의 시간 기록
 	bool isRunning = true;
 
-	printf("실시간 엔진 루프를 가동합니다. (종료하려면 Ctrl + C) \n");
-	SDL_Delay(1000); // 가동 전 1초 대기
+	SDL_Event ev;
 
 	// 메인 게임 루프
 	while (isRunning) {
+
+		// 창 닫기 버튼(X)을 누르면 안전하게 종료
+		while (SDL_PollEvent(&ev)) {
+			if (ev.type == SDL_QUIT) {
+				isRunning = false;
+			}
+		}
+
 		Uint32 currentTime = SDL_GetTicks();
 		Uint32 dt = currentTime - lastTime; // 이전 프레임과 현재 프레임 사이의 시간 차이
 
@@ -187,11 +220,11 @@ int main(int argc, char* argv[]) {
 			game_update(&myGame, dt);
 
 			// 임시 화면 출력
-			render_frame(NULL, NULL, NULL, NULL, &myGame);
+			render_frame(ren, NULL, NULL, NULL, &myGame);
 
 			// 만약 시간이 다 되어서 마감 상태로 넘어가면 하루 루프 종료
 			if (myGame.state == STATE_CLOSING) {
-				printf("\n 하루 90초 영업이 무사히 마감되었습니다!\n");
+				printf("\n 하루 영업이 무사히 마감되었습니다!\n");
 				isRunning = false;
 			}
 			lastTime = currentTime; // 시간 갱신
@@ -199,5 +232,9 @@ int main(int argc, char* argv[]) {
 
 		SDL_Delay(1);
 	}
+	SDL_DestroyRenderer(ren);
+	SDL_DestroyWindow(win);
+	TTF_Quit();
 	SDL_Quit();
+	return 0;
 }

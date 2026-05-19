@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{45c88e55-201b-4290-9a64-301549c47299}</ProjectGuid>
+    <ProjectGuid>{297ebc6d-4052-4080-92b1-e063dd37005c}</ProjectGuid>
     <RootNamespace>CompileCoffee</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -108,10 +108,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\SDL2_dev\SDL2-2.30.1\lib\x64;C:\SDL2_dev\SDL2_image-2.8.10\lib\x64;C:\SDL2_dev\SDL2_ttf-2.24.0\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;
-SDL2main.lib
-;SDL2_image.lib
-;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
