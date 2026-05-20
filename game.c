@@ -119,6 +119,8 @@ void game_update(Game* g, Uint32 dt) {
 		if (SDL_GetTicks() - g->combo_timer > COMBO_TIMEOUT_MS) {
 			g->combo = 0;
 			log_push(g, "콤보 타이아웃! 콤보가 초기화되었습니다.");
+
+			printf(g, "\n콤보 타이아웃! 콤보가 초기화되었습니다.\n");
 		}
 	}
 
@@ -192,7 +194,7 @@ int main(int argc, char* argv[]) {
 	game_init(&myGame); // 첫 자본금 및 리시피 세팅
 	game_start_day(&myGame); // Day 1 영업 강제 개시
 
-	printf("그래픽 실행 완료! \n");
+	printf("[컴파일 커피(Compile Coffee) - 실시간 로그] \n");
 
 	SDL_Delay(1000); // 가동 전 1초 대기
 
@@ -214,13 +216,44 @@ int main(int argc, char* argv[]) {
 			else if (ev.type == SDL_KEYDOWN) {
 				switch (ev.key.keysym.sym) {
 					case SDLK_1: // 숫자 1을 누르면 아메리카노 강제 판매
-						if (myGame.state == STATE_PLAYING) {
+
+
+						if (myGame.state = STATE_PLAYING) {
+							Uint32 current_ticks = SDL_GetTicks();
+
+							// 현재 콤보가 3개인 상태라면 5초 쿨타임이 지났는지 먼저 검사
+							if (myGame.combo >= 3) {
+								if (current_ticks - myGame.combo_lock_time < COMBO_COOL_DOWN_MS) {
+
+									// 아직 5초가 안 지났으면: 콤보 증가 X
+									myGame.day_revenue += 4000;
+									myGame.balance += 4000;
+									log_push(&myGame, "아메리카노 판매! (콤보 쿨타임 제한 중...)");
+									printf("\n커피 판매(콤보 5초 제한!) 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
+									break;
+								}
+								else {
+									// 5초가 지났으면
+									myGame.combo = 0;
+								}
+							}
+
+								// 일반적인 콤보 상승 로직
 								myGame.day_revenue += 4000;
 								myGame.balance += 4000;
 								myGame.combo++;
-								myGame.combo_timer = SDL_GetTicks(); // 콤보 타이머 리셋
-								log_push(&myGame, "아메리카노 판매 성공! (+4,000d원) ");
-								printf("커피 판매! 현재 잔액: %d원 | 콤보: %d\n", myGame.balance, myGame.combo);
+								myGame.combo_timer = current_ticks; // 콤보 타이머 리셋
+
+								// 3콤보 완성 -> 5초동안 락 상태
+								if (myGame.combo == 3) {
+									myGame.combo_lock_time = current_ticks;
+									log_push(&myGame, "3콤보 달성! 5초간 콤보가 잠깁니다. ");
+								}
+								else {
+									log_push(&myGame, "아메리카노 판매 성공! (+4,000원) ");
+								}
+
+								printf("\n커피 판매! 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
 						}
 						break;
 
@@ -244,7 +277,11 @@ int main(int argc, char* argv[]) {
 
 			// 만약 시간이 다 되어서 마감 상태로 넘어가면 하루 루프 종료
 			if (myGame.state == STATE_CLOSING) {
-				printf("\n 하루 영업이 무사히 마감되었습니다!\n");
+				printf("\n========================================\n");
+				printf(" %d일차 영업이 무사히 마감되었습니다!\n", myGame.day);
+				printf(" 오늘 하루 총 수입: %d원\n ", myGame.day_revenue);
+				printf("=======================================\n");
+
 				isRunning = false;
 			}
 			lastTime = currentTime; // 시간 갱신

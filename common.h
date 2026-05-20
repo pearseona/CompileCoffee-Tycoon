@@ -23,7 +23,8 @@
 #define MAX_INGREDIENT 5 // 원두, 우유, 시럽, 크림, 얼음
 #define MAX_DAYS 30 // 총 플레이 타임라인 30일
 #define DAY_SEC 90 // 하루 영업 시간; 실시간 90초
-#define COMBO_TIMEOUT_MS 8000 // 콤보 유지 시간 제한 (8초)
+#define COMBO_TIMEOUT_MS 7000 // 콤보 유지 시간 제한 (7초)
+#define COMBO_COOL_DOWN_MS 5000 // 콤보 잠금 해제까지 걸리는 시간 (5초)
 #define LOG_MAX 6 // 인게임 HUD에 노출할 최근 로그 수
 #define GOAL_PROFIT 1500000 // 최종 승리 조건: 누적 순이익 150만원
 
@@ -145,9 +146,10 @@ typedef struct {
     // 원자재 재고 창고
     int stock[MAX_INGREDIENT];
 
-    // 다이내믹 콤보 시스템
+    // 콤보 시스템
     int combo, max_combo;
     Uint32 combo_timer;
+    Uint32 combo_lock_time;
 
     // 업그레이드 트리
     Upgrade upg[6];

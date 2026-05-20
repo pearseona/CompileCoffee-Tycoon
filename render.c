@@ -36,8 +36,8 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 	SDL_RenderFillRect(ren, &mainRect);
 
 
-	/*  잔고 영역 */
-	int balance_w = clamp_i(g->balance / 200, 10, 300);
+	/*  잔액 영역 */
+	int balance_w = clamp_i(g->balance / 500, 10, SCREEN_W - 60);
 	SDL_Rect moneyRect = { 50, 130, balance_w, 40 };
 	SDL_SetRenderDrawColor(ren, 46, 139, 87, 255); // 초록색
 	SDL_RenderFillRect(ren, &moneyRect);
@@ -51,7 +51,7 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 	/* 콘솔 로그 */
 	static int frame_count = 0;
 	if (frame_count++ % 60 == 0) {
-		printf("Day: %d | Time Remaining: %d sec\n", g->day, g->day_ms / 1000);
+		printf("Day: %d | 영업 마감까지 남은 시간: %d sec\n", g->day, g->day_ms / 1000);
 	}
 
 	SDL_RenderPresent(ren);

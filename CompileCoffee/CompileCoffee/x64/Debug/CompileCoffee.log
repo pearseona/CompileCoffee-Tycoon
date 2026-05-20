@@ -1,4 +1,3 @@
 ﻿  game.c
-  render.c
-  코드를 생성하고 있습니다...
+C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\game.c(123,11): warning C4133: '함수': 'Game *'과(와) 'const char *const ' 사이의 형식이 호환되지 않습니다.
   CompileCoffee.vcxproj -> C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\CompileCoffee\x64\Debug\CompileCoffee.exe
