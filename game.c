@@ -273,21 +273,84 @@ int main(int argc, char* argv[]) {
 			else if (ev.type == SDL_KEYDOWN) {
 				switch (ev.key.keysym.sym) {
 
-					case SDLK_1: // 숫자 1을 누르면 아메리카노 강제 판매
-
+					case SDLK_1: // 1: 완료된 음료를 맨 앞 손님에게 서빙
 						if (myGame.state == STATE_PLAYING) {
-
-							brew_start(&myGame, 0, 0, MENU_AMERICANO);
-
+							cust_serve(&myGame, 0);
 						}
 						break;
 
 
-					case SDLK_2: // 숫자 2를 누르면 완료된 음료를 손님에게 서빙
-						if (myGame.state == STATE_PLAYING) {
-							
-							cust_serve(&myGame, 0);
+					case SDLK_2: // 2: 아메리카노 제조
+						if (myGame.state == STATE_PLAYING) {	
+							// 초기 해금(1) 상태
+							if (g_menu[MENU_AMERICANO].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_AMERICANO);
+							}
+							else {
+								log_push(&myGame, "아직 오픈되지 않은 메뉴입니다!");
+							}
+						}
+						break;
 
+					case SDLK_3: // 3: 카페라떼 제조
+						if (myGame.state == STATE_PLAYING) {
+							// 초기 해금(1) 상태
+							if (g_menu[MENU_LATTE].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_LATTE);
+							}
+							else {
+								log_push(&myGame, "아직 오픈되지 않은 메뉴입니다!");
+							}
+
+						}
+						break;
+
+					case SDLK_4: // 4: 바닐라라뗴 제조(초기 잠금)
+						if (myGame.state == STATE_PLAYING) {
+							// unlocked이 1이 되어야만 작동
+							if (g_menu[MENU_VANILLA_LATTE].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_VANILLA_LATTE);
+							}
+							else {
+								log_push(&myGame, "바닐라라떼는 상점에서 먼저 오픈해야 합니다!");
+								printf("[LOCK] 미오픈 메뉴 접근 차단: 바닐라라떼\n");
+							}
+						}
+						break;
+
+					case SDLK_5: // 5: 콜드브루 제조 (초기 잠금)
+						if (myGame.state == STATE_PLAYING) {
+							if (g_menu[MENU_COLD_BREW].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_COLD_BREW);
+							}
+							else {
+								log_push(&myGame, "콜드브루는 상점에서 먼저 오픈해야 합니다!");
+								printf("[LOCK] 미오픈 메뉴 접근 차단: 콜드브루\n");
+							}
+						}
+						break;
+
+					case SDLK_6: // 6: 카라멜 마키아토 제조 (초기 잠금)
+						if (myGame.state == STATE_PLAYING) {
+							if (g_menu[MENU_CARAMEL_MAC].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_CARAMEL_MAC);
+							}
+							else {
+								log_push(&myGame, "카라멜 마키아토는 상점에서 먼저 오픈해야 합니다!");
+								printf("[LOCK] 미오픈 메뉴 접근 차단: 카라멜 마키아토\n");
+							}
+						}
+						break;
+
+					case SDLK_7: // 7: 에스프레소 제조
+						if (myGame.state == STATE_PLAYING) {
+							// 초기 해금(1) 상태
+							if (g_menu[MENU_ESPRESSO].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_ESPRESSO);
+							}
+							else {
+								log_push(&myGame, "아직 오픈되지 않은 메뉴입니다!");
+							}
 						}
 						break;
 
