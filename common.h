@@ -65,7 +65,10 @@ typedef enum {
 typedef enum {
     CUST_WORKER = 0, // 직장인: 성격 급함
     CUST_FOODIE, // 미식가: 고급 메뉴 요구, 높은 팁
-    CUST_STUDENT // 학생: 할인 적용
+    CUST_STUDENT, // 학생: 할인 적용
+
+    CUST_TYPE_COUNT
+
 }CustType;
 
 // 제조 슬롯의 실시간 상태
