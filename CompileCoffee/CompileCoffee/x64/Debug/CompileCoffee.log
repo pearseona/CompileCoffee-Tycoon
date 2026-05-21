@@ -1,6 +1,4 @@
-﻿  game.c
-  render.c
-  코드를 생성하고 있습니다...
+﻿  render.c
 C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\customer.h(11,6): warning C4031: 둘째 정식 매개 변수 목록이 첫째 목록보다 깁니다.
   (소스 파일 '../render.c'을(를) 컴파일하는 중)
   

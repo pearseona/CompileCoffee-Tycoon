@@ -109,8 +109,8 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 	}
 
 	/*  잔액 영역 */
-	int balance_w = clamp_i(g->balance / 500, 10, SCREEN_W - 60);
-	SDL_Rect moneyRect = { 50, 130, balance_w, 40 };
+	int balance_w = clamp_i(g->balance / 500, 10, 200);
+	SDL_Rect moneyRect = { SCREEN_W - 240, 25, balance_w, 35};
 	SDL_SetRenderDrawColor(ren, 46, 139, 87, 255); // 초록색
 	SDL_RenderFillRect(ren, &moneyRect);
 
