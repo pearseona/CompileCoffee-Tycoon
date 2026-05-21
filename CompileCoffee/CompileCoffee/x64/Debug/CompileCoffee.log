@@ -1,5 +1,10 @@
-﻿  render.c
+﻿  customer.c
 C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\customer.h(11,6): warning C4031: 둘째 정식 매개 변수 목록이 첫째 목록보다 깁니다.
-  (소스 파일 '../render.c'을(를) 컴파일하는 중)
+  (소스 파일 '../customer.c'을(를) 컴파일하는 중)
   
+  game.c
+C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\customer.h(11,6): warning C4031: 둘째 정식 매개 변수 목록이 첫째 목록보다 깁니다.
+  (소스 파일 '../game.c'을(를) 컴파일하는 중)
+  
+  코드를 생성하고 있습니다...
   CompileCoffee.vcxproj -> C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\CompileCoffee\x64\Debug\CompileCoffee.exe

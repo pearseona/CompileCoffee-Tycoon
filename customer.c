@@ -62,23 +62,32 @@ void cust_spawn(Game* g, Uint32 dt) {
 
 /* 저장된 큐 인덱스의 손님 정산 및 퇴장 처리 */
 void game_serve_drink(Game* g, int customer_idx) {
+
 	Customer* c = &g->queue[customer_idx];
-	int base_price = 4000; // 기본 음료 가격
+
+	// 메뉴 가격
+	int menu_price = g_menu[c->order].price;
+	int final_payout = menu_price;
 
 	if (c->type == CUST_STUDENT) {
 		// 학생: 10% 할인
-		g->balance += (base_price * 0.9);
+		final_payout = (int)(menu_price * 0.9);
 		log_push(g, "학생 할인이 적용되었습니다. (-10%)");
 	}
 	else if (c->type == CUST_FOODIE) {
 		// 미식가: 팁 1500원
-		g->balance += (base_price + 1500);
+		final_payout = menu_price + 1500;
 		log_push(g, "미식가가 맛에 감동하여 팁을 주었습니다! (+1500원)");
 	}
 	else {
 		// 직장인: 정가 
-		g->balance += base_price;
+		log_push(g, "주문하신 음료 제공 완료!");
 	}
+
+	// 잔액 누적 계산
+	g->balance += final_payout;
+	g->day_revenue += final_payout; // 하루 정산용 수입
+
 	c->active = 0; // 서빙 완료 후 퇴장
 }
 
@@ -118,4 +127,68 @@ Customer* cust_at(Game* g, int qi) {
 }
 
 /* 제조 슬롯 완료 시 호출될 서빙 */
-void cust_serve(Game* g, int slot_idx) {}
+void cust_serve(Game* g, int slot_idx) {
+
+	// 해당 제조 슬롯 완료 상태 검사
+	if (g->slots[slot_idx].state != SLOT_DONE) {
+		log_push(g, "아직 완료되지 않은 슬롯입니다!");
+		return;
+	}
+
+	// 대기열 원형 큐 맨 앞에 손님이 실제 존재여부 검사
+	int front_customer_idx = g->q_head;
+	Customer* front_cust = &g->queue[front_customer_idx];
+
+	if (front_cust->active == 0) {
+		log_push(g, "서빙할 대기 손님이 없습니다! 음료가 버려집니다.");
+		g->slots[slot_idx].state = SLOT_EMPTY; // 슬롯 비우기
+		g->combo = 0; // 콤보 초기화
+		return;
+	}
+
+	// 슬롯의 음료 메뉴와 손님의 주문 메뉴 대조
+	MenuID cooked_menu = g->slots[slot_idx].menu;
+	MenuID ordered_menu = front_cust->order;
+
+	if (cooked_menu == ordered_menu) {
+
+		// 메뉴 일치 -> 서빙 성공
+		Uint32 current_ticks = SDL_GetTicks();
+
+		if (g->combo >= 3) {
+			if (current_ticks - g->combo_lock_time < 5000) { // 5초 쿨다운
+				log_push(g, "판매 성공! (콤보 쿨타임 제한 중...)");
+			}
+			else {
+				g->combo = 1; // 쿨타임 해제 시 재시작
+			}
+		}
+		else {
+			g->combo++;
+			if (g->combo == 3) {
+				g->combo_lock_time = current_ticks;
+				log_push(g, "3콤보 달성! 5초간 콤보 시스템이 잠깁니다.");
+			}
+		}
+
+		game_serve_drink(g, front_customer_idx);
+
+		// 서빙 완료이므로 큐 포인터 1 증가
+		g->q_head = (g->q_head + 1) % MAX_QUEUE;
+		if (g->q_size > 0) g->q_size--;
+
+		printf("[SUCCESS] 서빙 성공! 손님 주문: %s | 현재 콤보: %d\n", g_menu[ordered_menu].name, g->combo);
+	}
+	else {
+
+		// 메뉴 불일치 -> 서빙 실패
+		log_push(g, "주문과 다른 음료입니다! 재료가 낭비되었습니다.");
+		g->combo = 0;
+
+		printf("[FAIL] 서빙 실패: 손님 요구[%s] != 바리스타 제조[%s] | 콤보 리셋\n",
+			g_menu[ordered_menu].name, g_menu[cooked_menu].name);
+	}
+
+	// 슬롯 비우기
+	g->slots[slot_idx].state = SLOT_EMPTY;
+}

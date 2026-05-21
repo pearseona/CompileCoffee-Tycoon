@@ -218,75 +218,22 @@ int main(int argc, char* argv[]) {
 			// 키보드 입력 이벤트 처리
 			else if (ev.type == SDL_KEYDOWN) {
 				switch (ev.key.keysym.sym) {
+
 					case SDLK_1: // 숫자 1을 누르면 아메리카노 강제 판매
 
-
 						if (myGame.state == STATE_PLAYING) {
-							/*
-							Uint32 current_ticks = SDL_GetTicks();
-
-							int ame_price = g_menu[MENU_AMERICANO].price;
-
-							// 현재 콤보가 3개인 상태라면 5초 쿨타임이 지났는지 먼저 검사
-							if (myGame.combo >= 3) {
-								if (current_ticks - myGame.combo_lock_time < COMBO_COOL_DOWN_MS) {
-
-									// 아직 5초가 안 지났으면: 콤보 증가 X
-									myGame.day_revenue += ame_price;
-									myGame.balance += ame_price;
-									log_push(&myGame, "아메리카노 판매! (콤보 쿨타임 제한 중...)");
-									printf("\n커피 판매(콤보 5초 제한!) 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
-									break;
-								}
-								else {
-									// 5초가 지났으면
-									myGame.combo = 0;
-								}
-							}
-
-								// 일반적인 콤보 상승 로직
-								myGame.day_revenue += ame_price;
-								myGame.balance += ame_price;
-								myGame.combo++;
-								myGame.combo_timer = current_ticks; // 콤보 타이머 리셋
-
-								// 3콤보 완성 -> 5초동안 락 상태
-								if (myGame.combo == 3) {
-									myGame.combo_lock_time = current_ticks;
-									log_push(&myGame, "3콤보 달성! 5초간 콤보가 잠깁니다. ");
-								}
-								else {
-									log_push(&myGame, "아메리카노 판매 성공! (+4,000원) ");
-								}
-
-								printf("\n커피 판매! 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
-								*/
 
 							brew_start(&myGame, 0, 0, MENU_AMERICANO);
+
 						}
 						break;
 
 
-					// 테스트용 임시 서빙 버튼
-					case SDLK_2:
+					case SDLK_2: // 숫자 2를 누르면 완료된 음료를 손님에게 서빙
 						if (myGame.state == STATE_PLAYING) {
-							// 음료가 완성(SLOT_DONE)된 상태일 때만 비우기 작동
-							if (myGame.slots[0].state == SLOT_DONE) {
+							
+							cust_serve(&myGame, 0);
 
-								// 주석 처리해 뒀던 원래 정산 로직을 호출하여 돈 벌기!
-								int ame_price = g_menu[MENU_AMERICANO].price;
-								myGame.day_revenue += ame_price;
-								myGame.balance += ame_price;
-
-								// 서빙했으니 슬롯을 다시 깨끗하게 비워줍니다.
-								myGame.slots[0].state = SLOT_EMPTY;
-
-								log_push(&myGame, "아메리카노 서빙 완료! 슬롯이 비었습니다.");
-								printf("[SERVE] 1번 슬롯 음료를 서빙하여 슬롯을 비웠습니다. 잔액: %d\n", myGame.balance);
-							}
-							else {
-								log_push(&myGame, "서빙할 수 있는 완료된 음료가 없습니다!");
-							}
 						}
 						break;
 
