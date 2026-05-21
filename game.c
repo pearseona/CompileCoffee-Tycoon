@@ -59,6 +59,9 @@ void game_init(Game* g) {
 	g->upg[1].level = 0; 
 	g->upg[1].max_level = 3;
 
+	// 손님, 이벤트 랜덤
+	srand((unsigned int)time(NULL));
+
 	log_push(g, "컴파일 커피에 오신 것을 환영합니다!");
 }
 
@@ -80,7 +83,38 @@ void game_start_day(Game* g) {
 		g->slots[i].state = SLOT_EMPTY;
 	}
 
+	// 쿨다운 타이머 초기화
+	g->combo = 0;
+	g->combo_timer = 0;
+
 	log_push(g, "새로운 하루 영업을 개시합니다!");
+
+	/* 이벤트 NPC 확률 시스템 */
+	int npc_roll = rand() % 100;
+
+	if (npc_roll < 20) {
+
+		// 20% 확률로 위생검사관 등장 (재고 불시 검문)
+		log_push(g, "[이벤트] 위생검사관이 매장을 불시 방문했습니다!");
+		log_push(g, "재고 상태가 불량할 경우 평판 페널티가 부여됩니다.");
+		printf("\n[EVENT] 위생검사관 습격. 재고 관리 경보 발령!\n\n");
+
+		// 위생검사관 페널티: 특정 재고가 바닥나 있으면 평판 차감
+		if (g->stock[ING_BEAN] < 3 || g->stock[ING_ICE] < 2) {
+			g->reputation = clamp_i(g->reputation - 10, 0, 100);
+			log_push(g, "위생 상태 및 재고 부족으로 평판이 10 차감되었습니다!");
+		}
+	}
+	else if (npc_roll >= 80) {
+
+		// 20% 확률로 인플루언서 입장 
+		log_push(g, "[이벤트] 유명 인플루언서가 손님 무리에 합류했습니다!");
+		log_push(g, "주문 성공 시 평판이 폭등하지만, 실패 시 폭락합니다!");
+		printf("\n[EVENT] 인플루언서 방문. 대박 혹은 쪽박 기회!\n\n");
+		
+	}
+
+
 }
 
 /* 하루 영업 마감 및 일별 레코드 파일 백업 준비 */
@@ -117,20 +151,39 @@ void game_update(Game* g, Uint32 dt) {
 		return;
 	}
 
-	// 콤보 제한시간 타이머 갱신
-	if (g->combo > 0) {
-		if (SDL_GetTicks() - g->combo_timer > COMBO_TIMEOUT_MS) {
-			g->combo = 0;
-			log_push(g, "콤보 타이아웃! 콤보가 초기화되었습니다.");
+	/* 콤보 유지 및 락다운 타이머 */
 
-			printf("\n콤보 타이아웃! 콤보가 초기화되었습니다.\n");
+	// 콤보 유지 중일 때 제한 시간 차감
+	if (g->combo > 0 && g->combo < 3) {
+
+		if (g->combo_timer > dt) {
+			g->combo_timer -= dt;
+		}
+		else {
+			g->combo = 0;
+			g->combo_timer = 0;
+			log_push(g, "콤보 타임아웃! 연속 보너스가 초기화되었습니다.");
+			printf("[COMBO] 제한 시간 만료로 인해 콤보 리셋.\n");
 		}
 	}
 
-	// 손님 스폰 및 인내심 틱 업데이트 (추후 예정)
+	// 3콤보 달성하면 5초동안 락 상태
+	if (g->combo >= 3) {
+		if (g->combo_timer > dt) {
+			g->combo_timer -= dt; // 5초 쿨다운 실시간 차감
+		}
+		else {
+			g->combo = 0;
+			g->combo_timer = 0;
+			log_push(g, "콤보 락다운이 해제되었습니다! 다시 콤보를 노리세요.");
+			printf("[COMBO] 5초 쿨다운 만료! 잠금 해제 완료.\n");
+		}
+	}
+
+	// 손님 스폰 및 인내심 틱 업데이트
 	cust_update(g, dt);
 
-	// 음료 제조 진행 상태 업데이트 (추후 예정)
+	// 음료 제조 진행 상태 업데이트 
 	brew_update(g, dt);
 }
 
@@ -142,6 +195,7 @@ void log_push(Game* g, const char* msg) {
 		g->log_ttl[g->log_count] = SDL_GetTicks() + 4000; // 4초 동안 보여주기
 		g->log_count++;
 	}
+
 	// 이미 알림창이 6줄로 꽉 찬 경우
 	else {
 		// 한 줄씩 위로 당기기
