@@ -29,6 +29,7 @@ void game_init(Game* g) {
 
 
 	// 메뉴 레시피 
+	// 판매가, 원가, 제조시간(ms), {원두, 우유, 시럽, 크림, 얼음}, 해금여부
 	// 아메리카노 (원두 2, 얼음 1)
 	g_menu[MENU_AMERICANO] = (MenuInfo){ "아메리카노", 4000, 1000, 2000, {2, 0, 0, 0, 1}, 1 };
 	// 카페라떼 (원두 1, 우유 2)
@@ -120,7 +121,7 @@ void game_update(Game* g, Uint32 dt) {
 			g->combo = 0;
 			log_push(g, "콤보 타이아웃! 콤보가 초기화되었습니다.");
 
-			printf(g, "\n콤보 타이아웃! 콤보가 초기화되었습니다.\n");
+			printf("\n콤보 타이아웃! 콤보가 초기화되었습니다.\n");
 		}
 	}
 
@@ -218,16 +219,18 @@ int main(int argc, char* argv[]) {
 					case SDLK_1: // 숫자 1을 누르면 아메리카노 강제 판매
 
 
-						if (myGame.state = STATE_PLAYING) {
+						if (myGame.state == STATE_PLAYING) {
 							Uint32 current_ticks = SDL_GetTicks();
+
+							int ame_price = g_menu[MENU_AMERICANO].price;
 
 							// 현재 콤보가 3개인 상태라면 5초 쿨타임이 지났는지 먼저 검사
 							if (myGame.combo >= 3) {
 								if (current_ticks - myGame.combo_lock_time < COMBO_COOL_DOWN_MS) {
 
 									// 아직 5초가 안 지났으면: 콤보 증가 X
-									myGame.day_revenue += 4000;
-									myGame.balance += 4000;
+									myGame.day_revenue += ame_price;
+									myGame.balance += ame_price;
 									log_push(&myGame, "아메리카노 판매! (콤보 쿨타임 제한 중...)");
 									printf("\n커피 판매(콤보 5초 제한!) 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
 									break;
@@ -239,8 +242,8 @@ int main(int argc, char* argv[]) {
 							}
 
 								// 일반적인 콤보 상승 로직
-								myGame.day_revenue += 4000;
-								myGame.balance += 4000;
+								myGame.day_revenue += ame_price;
+								myGame.balance += ame_price;
 								myGame.combo++;
 								myGame.combo_timer = current_ticks; // 콤보 타이머 리셋
 

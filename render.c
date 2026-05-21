@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "common.h"
+#include "customer.h"
 
 void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Font* fnt_sm, Game* g) {
 
@@ -15,26 +16,97 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 
 
 	/* 상단 상태바 */
-	SDL_Rect headerRect = { 20, 20, SCREEN_W - 40, 60 };
-	SDL_SetRenderDrawColor(ren, 40, 60, 120, 255); // 블루
+	SDL_Rect headerRect = { 20, 20, SCREEN_W - 40, 45 };
+	SDL_SetRenderDrawColor(ren, 40, 60, 120, 255); // 네이비 블루
 	SDL_RenderFillRect(ren, &headerRect);
 
 
-	/* 실시간으로 남은 시간 타이머 */
-	int max_bar_w = SCREEN_W - 60;
-	int current_bar_w = (int)((float)g->day_ms / 90000.0f * max_bar_w);
-	if (current_bar_w < 0) current_bar_w = 0;
+	/* 상단 시간 타이머 바 (영업 시간) */
+	int max_timer_w = SCREEN_W - 40;
+	int current_timer_w = (int)((float)g->day_ms / 90000.0f * max_timer_w);
+	current_timer_w = clamp_i(current_timer_w, 0, max_timer_w);
 
-	SDL_Rect timerBar = { 30, 65, current_bar_w, 10 };
+	SDL_Rect timerBar = { 30, 70, current_timer_w, 10 };
 	SDL_SetRenderDrawColor(ren, 230, 80, 80, 255); // 주황빛 빨간색
 	SDL_RenderFillRect(ren, &timerBar);
 
 
-	/* 중앙 게임 플레이 영역 */
-	SDL_Rect mainRect = { 20, 100, SCREEN_W - 40, 400 };
+	/* 중앙 게임 플레이 영역 (손님 대기 큐 및 제조 워크스테이션) */
+	SDL_Rect mainRect = { 20, 95, SCREEN_W - 40, 405 };
 	SDL_SetRenderDrawColor(ren, 50, 50, 55, 255); // 약간 더 밝은 회색
 	SDL_RenderFillRect(ren, &mainRect);
 
+	/* ===== 손님 대기 큐 영역 렌더링 ===== */
+
+	// 화면 중앙에 최대 8명의 손님 자리를 가로로 배치
+	int start_x = 40;
+	int start_y = 120;
+	int card_w = 100; // 손님 캐릭터 및 주문이 보일 사각형 카드 너비
+	int card_h = 160; // 카드 높이
+	int spacing = 12; // 손님 사이의 간격
+
+	for (int i = 0; i < MAX_QUEUE; i++) {
+		int current_x = start_x + i * (card_w + spacing);
+
+		// 손님이 실시간으로 서 있는 슬롯인 경우에만 렌더링
+		if (g->queue[i].active == 1) {
+
+			/*  손님 카드 배경 */
+			SDL_Rect customerCard = { current_x, start_y, card_w, card_h };
+
+			if (g->queue[i].type == CUST_WORKER) {
+				SDL_SetRenderDrawColor(ren, 100, 149, 237, 255); // 직장인: 블루
+			} else if (g->queue[i].type == CUST_FOODIE) {
+				SDL_SetRenderDrawColor(ren, 218, 165, 32, 255); // 미식가: 골드
+			}
+			else if (g->queue[i].type == CUST_STUDENT) {
+				SDL_SetRenderDrawColor(ren, 143, 188, 143, 255); // 학생: 다크 그린
+			}
+			SDL_RenderFillRect(ren, &customerCard);
+
+			/* 주문한 음료 정보 표시 영역 사각형 */
+			SDL_Rect orderBox = { current_x + 10, start_y + 10, card_w - 20, 30 };
+			SDL_SetRenderDrawColor(ren, 255, 255, 255, 100); // 반투명 회색
+			SDL_RenderFillRect(ren, &orderBox);
+
+			/* 머리 위 실시간 인내심 3색 게이지 바 */
+			int gauge_max_w = card_w - 20; // 게이지 전체 너비 
+			int gauge_h = 10;
+			int gauge_x = current_x + 10;
+			int gauge_y = start_y + card_h - 25;
+
+			// 인내심 계산
+			double patience_ratio = (double)g->queue[i].patience_ms / g->queue[i].patience_max;
+			patience_ratio = (patience_ratio < 0.0) ? 0.0 : (patience_ratio > 1.0 ? 1.0 : patience_ratio);
+
+			int current_gauge_w = (int)(gauge_max_w * patience_ratio);
+
+			// 게이지바 어두운 배경들
+			SDL_Rect bgGauge = { gauge_x, gauge_y, gauge_max_w, gauge_h };
+			SDL_SetRenderDrawColor(ren, 40, 40, 40, 255);
+			SDL_RenderFillRect(ren, &bgGauge);
+
+			// 실시간 알맹이 게이지
+			SDL_Rect fillGauge = { gauge_x, gauge_y, current_gauge_w, gauge_h };
+
+			if (patience_ratio > 0.5) {
+				SDL_SetRenderDrawColor(ren, 46, 204, 113, 255);  // 50% 이상: 안전 초록색
+			}
+			else if (patience_ratio > 0.25) {
+				SDL_SetRenderDrawColor(ren, 241, 196, 15, 255); // 25%~50%: 경고 노란색
+			}
+			else {
+				SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);  // 25% 이하: 위험 빨간색
+			}
+			SDL_RenderFillRect(ren, &fillGauge);
+		}
+		else {
+			// 손님이 없는 빈 슬롯
+			SDL_Rect emptyCard = { current_x, start_y, card_w, card_h };
+			SDL_SetRenderDrawColor(ren, 45, 45, 50, 255);
+			SDL_RenderDrawRect(ren, &emptyCard);
+		}
+	}
 
 	/*  잔액 영역 */
 	int balance_w = clamp_i(g->balance / 500, 10, SCREEN_W - 60);
@@ -51,7 +123,8 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 	/* 콘솔 로그 */
 	static int frame_count = 0;
 	if (frame_count++ % 60 == 0) {
-		printf("Day: %d | 영업 마감까지 남은 시간: %d sec\n", g->day, g->day_ms / 1000);
+		printf("[HUD] Day: %d | 잔액: %d원 | 평판: %d | 남은시간: %d초\n",
+			g->day, g->balance, g->reputation, g->day_ms / 1000);
 	}
 
 	SDL_RenderPresent(ren);
