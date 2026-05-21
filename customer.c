@@ -152,22 +152,21 @@ void cust_serve(Game* g, int slot_idx) {
 
 	if (cooked_menu == ordered_menu) {
 
-		// 메뉴 일치 -> 서빙 성공
-		Uint32 current_ticks = SDL_GetTicks();
-
+		/* dt 기반 콤보 카운트 및 락다운 타이머 연동 */
 		if (g->combo >= 3) {
-			if (current_ticks - g->combo_lock_time < 5000) { // 5초 쿨다운
+
 				log_push(g, "판매 성공! (콤보 쿨타임 제한 중...)");
 			}
-			else {
-				g->combo = 1; // 쿨타임 해제 시 재시작
-			}
-		}
 		else {
+
 			g->combo++;
-			if (g->combo == 3) {
-				g->combo_lock_time = current_ticks;
-				log_push(g, "3콤보 달성! 5초간 콤보 시스템이 잠깁니다.");
+			g->combo_timer = COMBO_TIMEOUT_MS; // 일반 성공 시 콤보 유지 타이머 초기화
+			
+				if (g->combo == 3) {
+					// 3콤보가 되는 순간 5초 쿨다운 타이머 작동
+					g->combo_timer = 5000;
+					log_push(g, "3콤보 달성! 5초간 콤보 시스템이 잠깁니다.");
+					printf("[COMBO] ★★★ 3콤보 달성! 5초간 쿨다운 잠금 ★★★\n");
 			}
 		}
 
