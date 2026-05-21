@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include "common.h"
+#include "customer.h"
+#include "brew.h"
 
 MenuInfo g_menu[MAX_MENU];
 const char* g_ing_name[MAX_INGREDIENT] = { "원두", "우유", "시럽", "크림", "얼음" }; // 제료
@@ -220,6 +222,7 @@ int main(int argc, char* argv[]) {
 
 
 						if (myGame.state == STATE_PLAYING) {
+							/*
 							Uint32 current_ticks = SDL_GetTicks();
 
 							int ame_price = g_menu[MENU_AMERICANO].price;
@@ -257,6 +260,33 @@ int main(int argc, char* argv[]) {
 								}
 
 								printf("\n커피 판매! 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
+								*/
+
+							brew_start(&myGame, 0, 0, MENU_AMERICANO);
+						}
+						break;
+
+
+					// 테스트용 임시 서빙 버튼
+					case SDLK_2:
+						if (myGame.state == STATE_PLAYING) {
+							// 음료가 완성(SLOT_DONE)된 상태일 때만 비우기 작동
+							if (myGame.slots[0].state == SLOT_DONE) {
+
+								// 주석 처리해 뒀던 원래 정산 로직을 호출하여 돈 벌기!
+								int ame_price = g_menu[MENU_AMERICANO].price;
+								myGame.day_revenue += ame_price;
+								myGame.balance += ame_price;
+
+								// 서빙했으니 슬롯을 다시 깨끗하게 비워줍니다.
+								myGame.slots[0].state = SLOT_EMPTY;
+
+								log_push(&myGame, "아메리카노 서빙 완료! 슬롯이 비었습니다.");
+								printf("[SERVE] 1번 슬롯 음료를 서빙하여 슬롯을 비웠습니다. 잔액: %d\n", myGame.balance);
+							}
+							else {
+								log_push(&myGame, "서빙할 수 있는 완료된 음료가 없습니다!");
+							}
 						}
 						break;
 

@@ -149,6 +149,73 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 	SDL_SetRenderDrawColor(ren, 46, 139, 87, 255); // 초록색
 	SDL_RenderFillRect(ren, &moneyRect);
 
+	/* === 바리스타 제조 워크스테이션(슬롯) 렌더링 */
+	int slot_start_x = 40;
+	int slot_start_y = 330; // 손님 레이어 및 공간에 배치
+	int slot_w = 140; // 제조 슬롯 상자 너비
+	int slot_h = 130; // 제조 슬롯 상자 너비
+	int slot_spacing = 20;
+
+	for (int i = 0; i < g->slot_count; i++) {
+		int current_slot_x = slot_start_x + i * (slot_w + slot_spacing);
+		SDL_Rect slotRect = { current_slot_x, slot_start_y, slot_w, slot_h };
+
+		// 슬롯 상태별 테두리 및 내부 배경 색상 분기
+		if (g->slots[i].state == SLOT_EMPTY) {
+			// 빈 대기 상태 워크스테이션 (어두운 회색)
+			SDL_SetRenderDrawColor(ren, 45, 45, 48, 255);
+			SDL_RenderFillRect(ren, &slotRect);
+			SDL_SetRenderDrawColor(ren, 70, 70, 75, 255);
+			SDL_RenderDrawRect(ren, &slotRect);
+		}
+		else if (g->slots[i].state == SLOT_BREWING) {
+			// 음료 추출
+			SDL_SetRenderDrawColor(ren, 141, 110, 99, 255);
+			SDL_RenderFillRect(ren, &slotRect);
+
+			// 제조 중인 메뉴 (고유 색으로 메뉴판 박스 표시)
+			SDL_Rect miniMenuBox = { current_slot_x + 15, slot_start_y + 15, slot_w - 30, 25 };
+			MenuID mid = g->slots[i].menu;
+			if (mid == MENU_AMERICANO) SDL_SetRenderDrawColor(ren, 121, 85, 72, 255);
+			else if (mid == MENU_LATTE) SDL_SetRenderDrawColor(ren, 245, 222, 179, 255);
+			else SDL_SetRenderDrawColor(ren, 38, 24, 22, 255);
+			SDL_RenderFillRect(ren, &miniMenuBox);
+
+			// 실시간 바리스타 작업 게이지 바 누적 렌더링
+			int brew_bar_max_w = slot_w - 30;
+			int brew_bar_h = 15;
+			int brew_bar_x = current_slot_x + 15;
+			int brew_bar_y = slot_start_y + slot_h - 35;
+
+			// 누적 비율 계산
+			float brew_ratio = (float)g->slots[i].elapsed_ms / g->slots[i].required_ms;
+			if (brew_ratio > 1.0f) brew_ratio = 1.0f;
+			int brew_bar_current_w = (int)(brew_bar_max_w * brew_ratio);
+
+			// 게이지 배경
+			SDL_Rect bgBrewBar = { brew_bar_x, brew_bar_y, brew_bar_max_w, brew_bar_h };
+			SDL_SetRenderDrawColor(ren, 60, 60, 60, 255);
+			SDL_RenderFillRect(ren, &bgBrewBar);
+
+			// 차오르는 게이지
+			SDL_Rect fillBrewBar = { brew_bar_x, brew_bar_y, brew_bar_current_w, brew_bar_h };
+			SDL_SetRenderDrawColor(ren, 52, 152, 219, 255); // 블루
+			SDL_RenderFillRect(ren, &fillBrewBar);
+
+			if (g->slots[i].state == SLOT_DONE) {
+				// 제조 완료 서빙 대기
+				SDL_SetRenderDrawColor(ren, 38, 166, 154, 255); // 민트/네온 그린
+				SDL_RenderFillRect(ren, &slotRect);
+
+				// 상단에 완성 알림 표시
+				SDL_Rect alertBox = { current_slot_x + 15, slot_start_y + 15, slot_w - 30, 45 };
+				SDL_SetRenderDrawColor(ren, 240, 240, 240, 255); // 흰색
+				SDL_RenderFillRect(ren, &alertBox);
+			}
+		}
+
+	}
+
 
 	/* 하단 로그 영역 */
 	SDL_Rect logRect = { 20, 520, SCREEN_W - 40, 80 };
