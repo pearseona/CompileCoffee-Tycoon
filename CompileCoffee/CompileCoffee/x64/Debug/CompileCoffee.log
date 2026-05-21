@@ -1,3 +1,6 @@
-﻿  game.c
-C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\game.c(123,11): warning C4133: '함수': 'Game *'과(와) 'const char *const ' 사이의 형식이 호환되지 않습니다.
+﻿  customer.c
+C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\customer.h(11,6): warning C4031: 둘째 정식 매개 변수 목록이 첫째 목록보다 깁니다.
+  (소스 파일 '../customer.c'을(를) 컴파일하는 중)
+  
+C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\customer.c(70,17): warning C4244: '+=': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   CompileCoffee.vcxproj -> C:\Users\user\Desktop\4-1\ProgrammingLab\CompileCoffee-Tycoon\CompileCoffee\x64\Debug\CompileCoffee.exe
