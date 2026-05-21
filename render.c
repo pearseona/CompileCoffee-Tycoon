@@ -51,6 +51,10 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 		// 손님이 실시간으로 서 있는 슬롯인 경우에만 렌더링
 		if (g->queue[i].active == 1) {
 
+			// 인내심 비율 계산
+			double patience_ratio = (double)g->queue[i].patience_ms / g->queue[i].patience_max;
+			patience_ratio = (patience_ratio < 0.0) ? 0.0 : (patience_ratio > 1.0 ? 1.0 : patience_ratio);
+
 			/*  손님 카드 배경 */
 			SDL_Rect customerCard = { current_x, start_y, card_w, card_h };
 
@@ -64,20 +68,51 @@ void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Fon
 			}
 			SDL_RenderFillRect(ren, &customerCard);
 
-			/* 주문한 음료 정보 표시 영역 사각형 */
+
+			/* 주문한 음료 정보 표시 */
 			SDL_Rect orderBox = { current_x + 10, start_y + 10, card_w - 20, 30 };
-			SDL_SetRenderDrawColor(ren, 255, 255, 255, 100); // 반투명 회색
+
+			if (g->queue[i].order == MENU_AMERICANO) {
+				SDL_SetRenderDrawColor(ren, 121, 85, 72, 255);   // 아메리카노: 갈색
+			}
+			else if (g->queue[i].order == MENU_LATTE) {
+				SDL_SetRenderDrawColor(ren, 245, 222, 179, 255); // 카페라떼: 베이지색
+			}
+			else if (g->queue[i].order == MENU_VANILLA_LATTE) {
+				SDL_SetRenderDrawColor(ren, 255, 239, 186, 255); // 바닐라라떼: 밝은 노란빛
+			}
+			else if (g->queue[i].order == MENU_COLD_BREW) {
+				SDL_SetRenderDrawColor(ren, 62, 39, 35, 255);    // 콜드브루: 흑갈색
+			}
+			else if (g->queue[i].order == MENU_CARAMEL_MAC) {
+				SDL_SetRenderDrawColor(ren, 216, 112, 147, 255); // 카라멜 마키아토: 핑크빛 갈색
+			}
+			else if (g->queue[i].order == MENU_ESPRESSO) {
+				SDL_SetRenderDrawColor(ren, 38, 24, 22, 255);     // 에스프레소: 진한 검은갈색
+			}
+
 			SDL_RenderFillRect(ren, &orderBox);
+
+			/* 인내심 비율에 따른 만족도 상태 (추후 이모지로 대체) */
+			SDL_Rect emojiBox = { current_x + card_w - 25, start_y + 45, 15, 15 };
+
+			if (patience_ratio > 0.5) {
+				SDL_SetRenderDrawColor(ren, 0, 255, 0, 255); // 초록 점: 좋음 😊
+			}
+			else if (patience_ratio > 0.25) {
+				SDL_SetRenderDrawColor(ren, 255, 255, 0, 255); // 노란 점: 보통 😐
+			}
+			else {
+				SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);   // 빨간 점: 위험 😡) 
+			}
+
+			SDL_RenderFillRect(ren, &emojiBox);
 
 			/* 머리 위 실시간 인내심 3색 게이지 바 */
 			int gauge_max_w = card_w - 20; // 게이지 전체 너비 
 			int gauge_h = 10;
 			int gauge_x = current_x + 10;
 			int gauge_y = start_y + card_h - 25;
-
-			// 인내심 계산
-			double patience_ratio = (double)g->queue[i].patience_ms / g->queue[i].patience_max;
-			patience_ratio = (patience_ratio < 0.0) ? 0.0 : (patience_ratio > 1.0 ? 1.0 : patience_ratio);
 
 			int current_gauge_w = (int)(gauge_max_w * patience_ratio);
 
