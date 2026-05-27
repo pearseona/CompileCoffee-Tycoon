@@ -59,6 +59,9 @@ void game_init(Game* g) {
 	g->upg[1].level = 0; 
 	g->upg[1].max_level = 3;
 
+	// 손님, 이벤트 랜덤
+	srand((unsigned int)time(NULL));
+
 	log_push(g, "컴파일 커피에 오신 것을 환영합니다!");
 }
 
@@ -80,7 +83,38 @@ void game_start_day(Game* g) {
 		g->slots[i].state = SLOT_EMPTY;
 	}
 
+	// 쿨다운 타이머 초기화
+	g->combo = 0;
+	g->combo_timer = 0;
+
 	log_push(g, "새로운 하루 영업을 개시합니다!");
+
+	/* 이벤트 NPC 확률 시스템 */
+	int npc_roll = rand() % 100;
+
+	if (npc_roll < 20) {
+
+		// 20% 확률로 위생검사관 등장 (재고 불시 검문)
+		log_push(g, "[이벤트] 위생검사관이 매장을 불시 방문했습니다!");
+		log_push(g, "재고 상태가 불량할 경우 평판 페널티가 부여됩니다.");
+		printf("\n[EVENT] 위생검사관 습격. 재고 관리 경보 발령!\n\n");
+
+		// 위생검사관 페널티: 특정 재고가 바닥나 있으면 평판 차감
+		if (g->stock[ING_BEAN] < 3 || g->stock[ING_ICE] < 2) {
+			g->reputation = clamp_i(g->reputation - 10, 0, 100);
+			log_push(g, "위생 상태 및 재고 부족으로 평판이 10 차감되었습니다!");
+		}
+	}
+	else if (npc_roll >= 80) {
+
+		// 20% 확률로 인플루언서 입장 
+		log_push(g, "[이벤트] 유명 인플루언서가 손님 무리에 합류했습니다!");
+		log_push(g, "주문 성공 시 평판이 폭등하지만, 실패 시 폭락합니다!");
+		printf("\n[EVENT] 인플루언서 방문. 대박 혹은 쪽박 기회!\n\n");
+		
+	}
+
+
 }
 
 /* 하루 영업 마감 및 일별 레코드 파일 백업 준비 */
@@ -117,20 +151,39 @@ void game_update(Game* g, Uint32 dt) {
 		return;
 	}
 
-	// 콤보 제한시간 타이머 갱신
-	if (g->combo > 0) {
-		if (SDL_GetTicks() - g->combo_timer > COMBO_TIMEOUT_MS) {
-			g->combo = 0;
-			log_push(g, "콤보 타이아웃! 콤보가 초기화되었습니다.");
+	/* 콤보 유지 및 락다운 타이머 */
 
-			printf("\n콤보 타이아웃! 콤보가 초기화되었습니다.\n");
+	// 콤보 유지 중일 때 제한 시간 차감
+	if (g->combo > 0 && g->combo < 3) {
+
+		if (g->combo_timer > dt) {
+			g->combo_timer -= dt;
+		}
+		else {
+			g->combo = 0;
+			g->combo_timer = 0;
+			log_push(g, "콤보 타임아웃! 연속 보너스가 초기화되었습니다.");
+			printf("[COMBO] 제한 시간 만료로 인해 콤보 리셋.\n");
 		}
 	}
 
-	// 손님 스폰 및 인내심 틱 업데이트 (추후 예정)
+	// 3콤보 달성하면 5초동안 락 상태
+	if (g->combo >= 3) {
+		if (g->combo_timer > dt) {
+			g->combo_timer -= dt; // 5초 쿨다운 실시간 차감
+		}
+		else {
+			g->combo = 0;
+			g->combo_timer = 0;
+			log_push(g, "콤보 락다운이 해제되었습니다! 다시 콤보를 노리세요.");
+			printf("[COMBO] 5초 쿨다운 만료! 잠금 해제 완료.\n");
+		}
+	}
+
+	// 손님 스폰 및 인내심 틱 업데이트
 	cust_update(g, dt);
 
-	// 음료 제조 진행 상태 업데이트 (추후 예정)
+	// 음료 제조 진행 상태 업데이트 
 	brew_update(g, dt);
 }
 
@@ -142,6 +195,7 @@ void log_push(Game* g, const char* msg) {
 		g->log_ttl[g->log_count] = SDL_GetTicks() + 4000; // 4초 동안 보여주기
 		g->log_count++;
 	}
+
 	// 이미 알림창이 6줄로 꽉 찬 경우
 	else {
 		// 한 줄씩 위로 당기기
@@ -218,74 +272,84 @@ int main(int argc, char* argv[]) {
 			// 키보드 입력 이벤트 처리
 			else if (ev.type == SDL_KEYDOWN) {
 				switch (ev.key.keysym.sym) {
-					case SDLK_1: // 숫자 1을 누르면 아메리카노 강제 판매
 
-
+					case SDLK_1: // 1: 완료된 음료를 맨 앞 손님에게 서빙
 						if (myGame.state == STATE_PLAYING) {
-							/*
-							Uint32 current_ticks = SDL_GetTicks();
-
-							int ame_price = g_menu[MENU_AMERICANO].price;
-
-							// 현재 콤보가 3개인 상태라면 5초 쿨타임이 지났는지 먼저 검사
-							if (myGame.combo >= 3) {
-								if (current_ticks - myGame.combo_lock_time < COMBO_COOL_DOWN_MS) {
-
-									// 아직 5초가 안 지났으면: 콤보 증가 X
-									myGame.day_revenue += ame_price;
-									myGame.balance += ame_price;
-									log_push(&myGame, "아메리카노 판매! (콤보 쿨타임 제한 중...)");
-									printf("\n커피 판매(콤보 5초 제한!) 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
-									break;
-								}
-								else {
-									// 5초가 지났으면
-									myGame.combo = 0;
-								}
-							}
-
-								// 일반적인 콤보 상승 로직
-								myGame.day_revenue += ame_price;
-								myGame.balance += ame_price;
-								myGame.combo++;
-								myGame.combo_timer = current_ticks; // 콤보 타이머 리셋
-
-								// 3콤보 완성 -> 5초동안 락 상태
-								if (myGame.combo == 3) {
-									myGame.combo_lock_time = current_ticks;
-									log_push(&myGame, "3콤보 달성! 5초간 콤보가 잠깁니다. ");
-								}
-								else {
-									log_push(&myGame, "아메리카노 판매 성공! (+4,000원) ");
-								}
-
-								printf("\n커피 판매! 현재 잔액: %d원 | 콤보: %d\n\n", myGame.balance, myGame.combo);
-								*/
-
-							brew_start(&myGame, 0, 0, MENU_AMERICANO);
+							cust_serve(&myGame, 0);
 						}
 						break;
 
 
-					// 테스트용 임시 서빙 버튼
-					case SDLK_2:
-						if (myGame.state == STATE_PLAYING) {
-							// 음료가 완성(SLOT_DONE)된 상태일 때만 비우기 작동
-							if (myGame.slots[0].state == SLOT_DONE) {
-
-								// 주석 처리해 뒀던 원래 정산 로직을 호출하여 돈 벌기!
-								int ame_price = g_menu[MENU_AMERICANO].price;
-								myGame.day_revenue += ame_price;
-								myGame.balance += ame_price;
-
-								// 서빙했으니 슬롯을 다시 깨끗하게 비워줍니다.
-								myGame.slots[0].state = SLOT_EMPTY;
-
-								log_push(&myGame, "아메리카노 서빙 완료! 슬롯이 비었습니다.");
-								printf("[SERVE] 1번 슬롯 음료를 서빙하여 슬롯을 비웠습니다. 잔액: %d\n", myGame.balance);
+					case SDLK_2: // 2: 아메리카노 제조
+						if (myGame.state == STATE_PLAYING) {	
+							// 초기 해금(1) 상태
+							if (g_menu[MENU_AMERICANO].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_AMERICANO);
 							}
 							else {
-								log_push(&myGame, "서빙할 수 있는 완료된 음료가 없습니다!");
+								log_push(&myGame, "아직 오픈되지 않은 메뉴입니다!");
+							}
+						}
+						break;
+
+					case SDLK_3: // 3: 카페라떼 제조
+						if (myGame.state == STATE_PLAYING) {
+							// 초기 해금(1) 상태
+							if (g_menu[MENU_LATTE].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_LATTE);
+							}
+							else {
+								log_push(&myGame, "아직 오픈되지 않은 메뉴입니다!");
+							}
+
+						}
+						break;
+
+					case SDLK_4: // 4: 바닐라라뗴 제조(초기 잠금)
+						if (myGame.state == STATE_PLAYING) {
+							// unlocked이 1이 되어야만 작동
+							if (g_menu[MENU_VANILLA_LATTE].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_VANILLA_LATTE);
+							}
+							else {
+								log_push(&myGame, "바닐라라떼는 상점에서 먼저 오픈해야 합니다!");
+								printf("[LOCK] 미오픈 메뉴 접근 차단: 바닐라라떼\n");
+							}
+						}
+						break;
+
+					case SDLK_5: // 5: 콜드브루 제조 (초기 잠금)
+						if (myGame.state == STATE_PLAYING) {
+							if (g_menu[MENU_COLD_BREW].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_COLD_BREW);
+							}
+							else {
+								log_push(&myGame, "콜드브루는 상점에서 먼저 오픈해야 합니다!");
+								printf("[LOCK] 미오픈 메뉴 접근 차단: 콜드브루\n");
+							}
+						}
+						break;
+
+					case SDLK_6: // 6: 카라멜 마키아토 제조 (초기 잠금)
+						if (myGame.state == STATE_PLAYING) {
+							if (g_menu[MENU_CARAMEL_MAC].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_CARAMEL_MAC);
+							}
+							else {
+								log_push(&myGame, "카라멜 마키아토는 상점에서 먼저 오픈해야 합니다!");
+								printf("[LOCK] 미오픈 메뉴 접근 차단: 카라멜 마키아토\n");
+							}
+						}
+						break;
+
+					case SDLK_7: // 7: 에스프레소 제조
+						if (myGame.state == STATE_PLAYING) {
+							// 초기 해금(1) 상태
+							if (g_menu[MENU_ESPRESSO].unlocked) {
+								brew_start(&myGame, 0, 0, MENU_ESPRESSO);
+							}
+							else {
+								log_push(&myGame, "아직 오픈되지 않은 메뉴입니다!");
 							}
 						}
 						break;
