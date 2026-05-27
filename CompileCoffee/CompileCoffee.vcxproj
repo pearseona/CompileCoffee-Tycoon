@@ -102,7 +102,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\SDL2_dev\SDL2-2.30.1\include;C:\SDL2_dev\SDL2_image-2.8.10\include;C:\SDL2_dev\SDL2_ttf-2.24.0\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\SDL2_dev\SDL2-2.30.1\include;C:\SDL2_dev\SDL2_image-2.8.10\include;C:\SDL2_dev\SDL2_ttf-2.24.0\include;$(ProjectDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -144,6 +144,7 @@ SDL2main.lib
     <ClInclude Include="..\render.h" />
     <ClInclude Include="..\save.h" />
     <ClInclude Include="..\upgrade.h" />
+    <ClInclude Include="game.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
