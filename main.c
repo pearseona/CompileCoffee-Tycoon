@@ -8,6 +8,7 @@
 #include "game.h"     
 #include "customer.h"
 #include "brew.h"
+#include "shop.h"
 
 int main(int argc, char* argv[]) {
 
@@ -76,6 +77,28 @@ int main(int argc, char* argv[]) {
 					}
 					break;
 
+
+				/* ===== [상점 전용 입력] 상점 관련(STATE_UPGRADE) ===== */
+
+				case SDLK_8: // 8: 제조 슬롯 확장 구매 시도
+					if (myGame.state == STATE_UPGRADE) {
+						shop_buy_upgrade(&myGame, 0);
+					}
+					break;
+
+				case SDLK_9: // 9: 머신 속도 향상 구매 시도
+					if (myGame.state == STATE_UPGRADE) {
+						shop_buy_upgrade(&myGame, 1);
+					}
+					break;
+
+				case SDLK_RETURN: // Enter: 다음 날(Day++) 영업 개시
+					if (myGame.state == STATE_UPGRADE) {
+						shop_next_day(&myGame);
+					}
+					break;
+
+				/* ===== 인게임 플레이 제조 키 ===== */
 
 				case SDLK_2: // 2: 아메리카노 제조
 					if (myGame.state == STATE_PLAYING) {
@@ -189,13 +212,18 @@ int main(int argc, char* argv[]) {
 			else if (myGame.state == STATE_UPGRADE) {
 
 				static int shop_announce_day = 0;
+
 				if (shop_announce_day != myGame.day) {
 					printf("\n========================================\n");
-					printf(" [SHOP] 상점 정비 페이즈에 진입했습니다.\n");
-					printf(" 현재 보유 자본금: %d원\n", myGame.balance);
-					printf(" 여기에서 업그레이드 및 다음 날 장사 준비를 진행합니다.\n");
-					printf(" ➔ [ESC] 키를 누르면 게임을 종료합니다.\n");
-					printf("\n========================================\n");
+					printf(" [SHOP] 제 %d일차 상점 정비 페이즈에 진입했습니다.\n", myGame.day);
+					printf(" 현재 보유 자본금: %d원 | 현재 제조 슬롯 수: %d개\n", myGame.balance, myGame.slot_count);
+					printf(" ----------------------------------------\n");
+					printf("  [8] 제조 슬롯 확장 구매 (비용: 3000원)\n");
+					printf("  [9] 머신 속도 향상 구매 (비용: 25000원)\n");
+					printf(" ----------------------------------------\n");
+					printf(" ➔ 업그레이드를 마쳤다면 [Enter]를 눌러 다음 날 영업을 시작하세요.\n");
+					printf("=======================================\n\n");
+					shop_announce_day = myGame.day;
 				}
 			}
 
