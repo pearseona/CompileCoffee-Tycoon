@@ -135,16 +135,19 @@ SDL2main.lib
     <ClCompile Include="..\main.c" />
     <ClCompile Include="..\render.c" />
     <ClCompile Include="..\save.c" />
+    <ClCompile Include="..\shop.c" />
     <ClCompile Include="..\upgrade.c" />
+    <ClCompile Include="render_ingame.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\brew.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\customer.h" />
+    <ClInclude Include="..\game.h" />
     <ClInclude Include="..\render.h" />
     <ClInclude Include="..\save.h" />
+    <ClInclude Include="..\shop.h" />
     <ClInclude Include="..\upgrade.h" />
-    <ClInclude Include="game.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
