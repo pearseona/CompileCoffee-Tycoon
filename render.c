@@ -8,7 +8,7 @@ static TTF_Font* g_fnt_lg = NULL; // 대형 폰트 (32px)
 static TTF_Font* g_fnt_md = NULL; // 중형 폰트 (20px)
 static TTF_Font* g_fnt_sm = NULL; // 소형 폰트 (14px)
 
-/* 폰트 엔진 준비 */
+/* 폰트 엔진 초기화 */
 bool render_init_fonts() {
 	g_fnt_lg = TTF_OpenFont("font.ttf", 32);
 	g_fnt_md = TTF_OpenFont("font.ttf", 20);
@@ -33,7 +33,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 
 	if (!ren || !g) return;
 
-	// ========== 배경화면 및 메인 레이아웃 ==========
+	/* ========== 배경화면 및 메인 레이아웃 ========== */
 
 	/* 배경화면 */
 	SDL_SetRenderDrawColor(ren, 30, 30, 35, 255); // 다크 그레이
@@ -61,24 +61,30 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 	SDL_SetRenderDrawColor(ren, 50, 50, 55, 255); // 약간 더 밝은 회색
 	SDL_RenderFillRect(ren, &mainRect);
 
-	// 손님 큐 영역 호출
+	// 손님 큐 및 바리스타 슬롯 렌더링
 	draw_customer_queue(ren, g);
-
-	// 바리스타 제조 영역 호출
 	draw_barista_slots(ren, g);
 
-	// ========== 하단 UI 및 잔액 ==========
-
-	/*  잔액 영역 */
-	int balance_w = clamp_i(g->balance / 500, 10, 200);
-	SDL_Rect moneyRect = { SCREEN_W - 240, 25, balance_w, 35};
-	SDL_SetRenderDrawColor(ren, 46, 139, 87, 255); // 초록색
-	SDL_RenderFillRect(ren, &moneyRect);
-
-	/* 하단 로그 영역 */
+	// 하단 텍스트 로그 영역
 	SDL_Rect logRect = { 20, 520, SCREEN_W - 40, 80 };
-	SDL_SetRenderDrawColor(ren, 70, 40, 40, 255); // 딥 레드
+	SDL_SetRenderDrawColor(ren, 70, 40, 40, 255);
 	SDL_RenderFillRect(ren, &logRect);
+
+	/* ========== 텍스트 출력 ========== */
+	SDL_Color white = { 255, 255, 255, 255 }; // 흰색
+	char textBuf[128];
+
+	// 영업 일차 및 평판 출력
+	sprintf(textBuf, "Day %d  |  평판: %d / 100", g->day, g->reputation);
+	draw_text(ren, g_fnt_md, textBuf, 40, 32, white);
+
+	// 남은 장사 시간 실시간 타이머 초단위 출력
+	sprintf(textBuf, "남은 시간: %d초", g->day_ms / 1000);
+	draw_text(ren, g_fnt_md, textBuf, SCREEN_W - 180, 32, white);
+
+	// 잔액 바 우측 정렬 텍스트 출력
+	sprintf(textBuf, "보유 잔액: %d원", g->balance);
+	draw_text(ren, g_fnt_md, textBuf, SCREEN_W - 420, 32, white);
 	
 	/* 콘솔 로그 */
 	if (g->state == STATE_PLAYING) {
@@ -90,4 +96,24 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 	}
 
 	SDL_RenderPresent(ren);
+}
+
+/* 지정한 픽셀 좌표에 텍스트를 출력하는 함수 본체 */
+void draw_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int y, SDL_Color color) {
+	if (!ren || !font || !text || text[0] == '\0') return;
+
+	SDL_Surface* surf = TTF_RenderUTF8_Blended(font, text, color);
+	if (!surf) return;
+
+	SDL_Texture* tex = SDL_CreateTextureFromSurface(ren, surf);
+	if (!tex) {
+		SDL_FreeSurface(surf);
+		return;
+	}
+
+	SDL_Rect dstRect = { x, y, surf->w, surf->h };
+	SDL_RenderCopy(ren, tex, NULL, &dstRect);
+
+	SDL_DestroyTexture(tex);
+	SDL_FreeSurface(surf);
 }
