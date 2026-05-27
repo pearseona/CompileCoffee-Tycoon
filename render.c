@@ -1,12 +1,37 @@
-// SDL2 전체 렌더링
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
+#include <stdbool.h>
 #include "render.h"
 
-void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md, TTF_Font* fnt_sm, Game* g) {
+//내부에서만 사용할 크기별 폰트
+static TTF_Font* g_fnt_lg = NULL; // 대형 폰트 (32px)
+static TTF_Font* g_fnt_md = NULL; // 중형 폰트 (20px)
+static TTF_Font* g_fnt_sm = NULL; // 소형 폰트 (14px)
 
-	if (!ren || !g)
-		return;
+/* 폰트 엔진 준비 */
+bool render_init_fonts() {
+	g_fnt_lg = TTF_OpenFont("font.ttf", 32);
+	g_fnt_md = TTF_OpenFont("font.ttf", 20);
+	g_fnt_sm = TTF_OpenFont("font.ttf", 14);
+
+	if (!g_fnt_lg || !g_fnt_md || !g_fnt_sm) {
+		printf("[ERROR] font.ttf 로드 실패! 디스크 위치를 확인하세요.\n");
+		return false;
+	}
+	return true;
+}
+
+/* 프로그램 종료 시 폰트 정리 */
+void render_close_fonts() {
+	if (g_fnt_lg) TTF_CloseFont(g_fnt_lg);
+	if (g_fnt_md) TTF_CloseFont(g_fnt_md);
+	if (g_fnt_sm) TTF_CloseFont(g_fnt_sm);
+}
+
+/* 메인 렌더링 컨트롤러 */
+void render_frame(SDL_Renderer* ren, Game* g) {
+
+	if (!ren || !g) return;
 
 	// ========== 배경화면 및 메인 레이아웃 ==========
 

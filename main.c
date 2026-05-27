@@ -9,6 +9,7 @@
 #include "customer.h"
 #include "brew.h"
 #include "shop.h"
+#include "render.h"
 
 int main(int argc, char* argv[]) {
 
@@ -39,6 +40,15 @@ int main(int argc, char* argv[]) {
 	}
 
 	SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
+
+	// 폰트 호출
+	if (!render_init_fonts()) {
+		SDL_DestroyRenderer(ren);
+		SDL_DestroyWindow(win);
+		TTF_Quit();
+		SDL_Quit();
+		return -1;
+	}
 
 	Game myGame;
 	game_init(&myGame); // 첫 자본금 및 리시피 세팅
@@ -190,7 +200,7 @@ int main(int argc, char* argv[]) {
 			game_update(&myGame, dt);
 
 			// 임시 화면 출력
-			render_frame(ren, NULL, NULL, NULL, &myGame);
+			render_frame(ren, &myGame);
 
 			// 만약 시간이 다 되어서 마감 상태로 넘어가면 하루 루프 종료
 			if (myGame.state == STATE_CLOSING) {
@@ -232,6 +242,9 @@ int main(int argc, char* argv[]) {
 		
 		SDL_Delay(1);
 	}
+
+	render_close_fonts();
+
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
 	TTF_Quit();
