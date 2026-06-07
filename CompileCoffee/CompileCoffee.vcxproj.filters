@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="소스 파일\render">
+      <UniqueIdentifier>{934534a2-6c57-4308-911a-0f1ba404ebd2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\brew.c">
@@ -27,14 +30,20 @@
     <ClCompile Include="..\main.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\render.c">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="..\save.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="..\upgrade.c">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shop.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="..\render.c">
+      <Filter>소스 파일\render</Filter>
+    </ClCompile>
+    <ClCompile Include="render_ingame.c">
+      <Filter>소스 파일\render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,13 +56,19 @@
     <ClInclude Include="..\customer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="..\render.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="..\save.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\upgrade.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\game.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shop.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\render.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
