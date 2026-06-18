@@ -70,7 +70,8 @@ void game_init(Game* g) {
 void game_start_day(Game* g) {
 	g->state = STATE_PLAYING;
 
-	g->day_ms = DAY_SEC * 1000; // 90초를 ms 단위로 환산 (90000ms)
+	// g->day_ms = DAY_SEC * 1000; // 90초를 ms 단위로 환산 (90000ms)
+	g->day_ms = 20000;
 
 	g->day_revenue = 0;
 	g->day_expenditure = 0;

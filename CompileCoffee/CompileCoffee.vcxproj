@@ -155,6 +155,12 @@ SDL2main.lib
   <ItemGroup>
     <Font Include="..\font.ttf" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\barista.bmp" />
+    <Image Include="..\..\..\..\customer_0.bmp" />
+    <Image Include="..\..\..\..\customer_1.bmp" />
+    <Image Include="..\..\..\..\customer_2.bmp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

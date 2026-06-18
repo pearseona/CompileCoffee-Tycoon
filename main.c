@@ -50,6 +50,10 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
+	if (!render_init_images(ren)) {
+		printf("[WARN] BMP 이미지 로드 실패! 파일이 폴더에 있는지 확인하세요.\n");
+	}
+
 	Game myGame;
 	game_init(&myGame); // 첫 자본금 및 리시피 세팅
 	game_start_day(&myGame); // Day 1 영업 강제 개시
@@ -83,7 +87,7 @@ int main(int argc, char* argv[]) {
 					else if (myGame.state == STATE_CLOSING) {
 						myGame.state = STATE_UPGRADE;
 						log_push(&myGame, "상점에 입장했습니다. 필요한 업그레이드를 진행하세요.");
-						printf("[STATE] 마감 정산 확인 완료 -> 상점 화면(STATE_UPGRADE) 진입\n");
+						printf("[STATE] 마감 정산 확인 완료 -> 상점 화면 진입\n");
 					}
 					break;
 
@@ -225,7 +229,7 @@ int main(int argc, char* argv[]) {
 
 				if (shop_announce_day != myGame.day) {
 					printf("\n========================================\n");
-					printf(" [SHOP] 제 %d일차 상점 정비 페이즈에 진입했습니다.\n", myGame.day);
+					printf(" [SHOP] 제 %d일차 상점 정비 단계에 진입했습니다.\n", myGame.day);
 					printf(" 현재 보유 자본금: %d원 | 현재 제조 슬롯 수: %d개\n", myGame.balance, myGame.slot_count);
 					printf(" ----------------------------------------\n");
 					printf("  [8] 제조 슬롯 확장 구매 (비용: 3000원)\n");
@@ -244,6 +248,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	render_close_fonts();
+	render_close_images();
 
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
