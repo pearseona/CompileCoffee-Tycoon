@@ -156,6 +156,7 @@ SDL2main.lib
     <Font Include="..\font.ttf" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="..\..\..\..\background.bmp" />
     <Image Include="..\..\..\..\barista.bmp" />
     <Image Include="..\..\..\..\customer_0.bmp" />
     <Image Include="..\..\..\..\customer_1.bmp" />

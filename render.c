@@ -4,14 +4,16 @@
 #include "render.h"
 
 // 크기별 폰트
-static TTF_Font* g_fnt_lg = NULL; // 대형 폰트 
-static TTF_Font* g_fnt_md = NULL; // 중형 폰트 
-static TTF_Font* g_fnt_sm = NULL; // 소형 폰트 )
+TTF_Font* g_fnt_lg = NULL; // 대형 폰트 
+TTF_Font* g_fnt_md = NULL; // 중형 폰트 
+TTF_Font* g_fnt_sm = NULL; // 소형 폰트 
 
 // 픽셀 그래픽
 SDL_Texture* g_tex_customers[3] = { NULL, NULL, NULL };
 SDL_Texture* g_tex_barista = NULL;
 SDL_Texture* g_tex_station = NULL;
+SDL_Texture* g_tex_background = NULL;
+
 
 /* 폰트 엔진 초기화 */
 bool render_init_fonts() {
@@ -36,6 +38,16 @@ void render_close_fonts() {
 /* 픽셀 이미지 로드 */
 bool render_init_images(SDL_Renderer* ren) {
 	if (!ren) return false;
+
+	// 전체 배경 이미지 로드
+	SDL_Surface* surf_bg = SDL_LoadBMP("background.bmp"); // 준비하신 배경 파일명
+	if (!surf_bg) {
+		printf("[WARN] background.bmp 로드 실패! 기본 색상 배경으로 대체합니다.\n");
+	}
+	else {
+		g_tex_background = SDL_CreateTextureFromSurface(ren, surf_bg);
+		SDL_FreeSurface(surf_bg);
+	}
 
 	// 손님 3명 로드 (직장인, 미식가, 학생)
 	char fileName[64];
@@ -76,6 +88,12 @@ bool render_init_images(SDL_Renderer* ren) {
 
 /* 프로그램 종료 시 그래픽 메모리 해제 */
 void render_close_images() {
+
+	// 배경 이미지 해제
+	if (g_tex_background) {
+		SDL_DestroyTexture(g_tex_background);
+		g_tex_background = NULL;
+	}
 	
 	// 손님 3명 해제
 	for (int i = 0; i < 3; i++) {
@@ -108,9 +126,11 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 	
 	if (g->state == STATE_PLAYING || g->state == STATE_CLOSING) {
 
+		draw_game_background(ren);
+
 		// 상단 상태바
 		SDL_Rect headerRect = { 20, 20, SCREEN_W - 40, 45 };
-		SDL_SetRenderDrawColor(ren, 40, 60, 120, 255); 
+		SDL_SetRenderDrawColor(ren, 40, 60, 120, 255);
 		SDL_RenderFillRect(ren, &headerRect);
 
 		// 상단 시간 타이머 바
@@ -121,11 +141,6 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_Rect timerBar = { 30, 70, current_timer_w, 10 };
 		SDL_SetRenderDrawColor(ren, 230, 80, 80, 255); 
 		SDL_RenderFillRect(ren, &timerBar);
-
-		// 중앙 게임 플레이 영역
-		SDL_Rect mainRect = { 20, 95, SCREEN_W - 40, 405 };
-		SDL_SetRenderDrawColor(ren, 50, 50, 55, 255); 
-		SDL_RenderFillRect(ren, &mainRect);
 
 		// 모듈별 렌더링 호출 
 		draw_customer_queue(ren, g);
