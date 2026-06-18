@@ -197,7 +197,7 @@ void game_close_day(Game* g);
 void game_update(Game* g, Uint32 dt);
 
 // customer.c
-void cust_spawn(Game* g);
+void cust_spawn(Game* g, Uint32 dt);
 void cust_update(Game* g, Uint32 dt);
 Customer* cust_at(Game* g, int qi);
 void cust_serve(Game* g, int slot_idx);
@@ -217,8 +217,7 @@ int load_highscore(void);
 int save_load_game(Game* g);
 
 // render.c
-void render_frame(SDL_Renderer* ren, TTF_Font* fnt_lg, TTF_Font* fnt_md,
-    TTF_Font* fnt_sm, Game* g);
+void render_frame(SDL_Renderer* ren, Game* g);
 
 void log_push(Game* g, const char* msg);
 int clamp_i(int v, int lo, int hi);

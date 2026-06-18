@@ -20,4 +20,4 @@ void cust_update(Game* g, Uint32 dt);
 Customer* cust_at(Game* g, int qi);
 
 // 제조 슬롯 완료 시 호출될 서빙
-void game_serve_drink(Game* g, int customer_idx);
+void cust_serve(Game* g, int slot_idx);

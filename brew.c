@@ -39,7 +39,7 @@ void brew_start(Game* g, int slot_idx, int qi, MenuID menu) {
 
 	// 알림 로그
 	char msg[80];
-	sprintf(msg, "[%s] 제조를 시작합니다...", g_menu[menu].name);
+	sprintf_s(msg, "[%s] 제조를 시작합니다...", g_menu[menu].name);
 	log_push(g, msg);
 
 	printf("[BREW] %d번 슬롯: [%s] 가동 개시 (필요시간: %dms)\n",
@@ -62,7 +62,7 @@ void brew_update(Game* g, Uint32 dt) {
 
 				char msg[80];
 
-				sprintf(msg, "[%s] 제조 완료! 서빙 가능합니다.", g_menu[g->slots[i].menu].name);
+				sprintf_s(msg, "[%s] 제조 완료! 서빙 가능합니다.", g_menu[g->slots[i].menu].name);
 				log_push(g, msg);
 
 				printf("[DONE] %d번 슬롯: %s 완성! (소요: %dms)\n",
