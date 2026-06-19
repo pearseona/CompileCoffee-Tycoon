@@ -93,10 +93,11 @@ int main(int argc, char* argv[]) {
 				int mx = ev.button.x;
 				int my = ev.button.y;
 
+				// 1. 인게임 영업 단계 플레이 클릭 처리
 				if (myGame.state == STATE_PLAYING) {
 					bool clicked_slot = false;
 
-					// 1. 머신 제조 슬롯 마우스 클릭 감지
+					// 머신 제조 슬롯 마우스 클릭 감지
 					for (int i = 0; i < myGame.slot_count; i++) {
 						int sx = 70 + i * 80;
 						int sy = 400;
@@ -109,7 +110,7 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
-					// 2. 대기 손님 구역 마우스 클릭 감지 및 서빙 연동
+					// 대기 손님 구역 마우스 클릭 감지 및 서빙 연동
 					int spots_x[3] = { 180, 440, 700 };
 					for (int i = 0; i < 3; i++) {
 						int cx = spots_x[i];
@@ -128,7 +129,7 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
-					// 3. 하단 미니 메뉴판 마우스 가상 클릭 패널 범위 보정 수선
+					// 하단 미니 메뉴판 마우스 가상 클릭 패널 범위 보정 수선
 					if (!clicked_slot && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.slots[myGame.sel_slot].state == SLOT_EMPTY) {
 							for (int i = 0; i < 6; i++) {
@@ -137,7 +138,6 @@ int main(int argc, char* argv[]) {
 								if (mx >= ix && mx <= ix + 45 && my >= iy && my <= iy + 45) {
 									int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
 
-									// 🛡️ 마우스 클릭 시에도 유령 손님 예외 방지 필터링 보강
 									if (myGame.queue[target_qi].active) {
 										if (g_menu[i].unlocked) {
 											brew_start(&myGame, myGame.sel_slot, target_qi, (MenuID)i);
@@ -155,6 +155,24 @@ int main(int argc, char* argv[]) {
 								}
 							}
 						}
+					}
+				}
+				// 🎯 2. 상점 정비 단계(STATE_UPGRADE) 핑크 카드 마우스 클릭 판정 
+				else if (myGame.state == STATE_UPGRADE) {
+					int card_y = 250;
+					int card_w = (SCREEN_W - 170) / 2; // 2열 가로폭 수식 동기화
+					int card_h = 145;
+					int right_x = 70 + card_w + 30;    // 우측 카드 시작점 마진 계산
+
+					// 🔨 좌측 핑크 카드 (제조 슬롯 확장) 영역 클릭 패널
+					if (mx >= 70 && mx <= 70 + card_w && my >= card_y && my <= card_y + card_h) {
+						printf("[INPUT] 마우스 핑크 카드 클릭: 슬롯 확장 결제 시도\n");
+						shop_buy_upgrade(&myGame, 0);
+					}
+					// ⚡ 우측 핑크 카드 (고속 커피 머신 도입) 영역 클릭 패널
+					else if (mx >= right_x && mx <= right_x + card_w && my >= card_y && my <= card_y + card_h) {
+						printf("[INPUT] 마우스 핑크 카드 클릭: 머신 속도 강화 결제 시도\n");
+						shop_buy_upgrade(&myGame, 1);
 					}
 				}
 			}
@@ -204,7 +222,6 @@ int main(int argc, char* argv[]) {
 					}
 					break;
 
-					// 🛠️ [Q ~ Y 단축키 구역] 유령 손님 액세스 위반(0xC0000005) 방어막 주입 완료!
 				case SDLK_q:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_AMERICANO].unlocked) {
