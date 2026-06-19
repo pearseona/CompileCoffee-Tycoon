@@ -159,6 +159,8 @@
     <Image Include="customer_0.bmp" />
     <Image Include="customer_1.bmp" />
     <Image Include="customer_2.bmp" />
+    <Image Include="shop_machine.png" />
+    <Image Include="shop_slot.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

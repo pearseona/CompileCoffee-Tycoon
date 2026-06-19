@@ -93,5 +93,11 @@
     <Image Include="customer_2.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
+    <Image Include="shop_slot.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="shop_machine.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
   </ItemGroup>
 </Project>
