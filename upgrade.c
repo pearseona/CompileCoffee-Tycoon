@@ -19,22 +19,35 @@ void upg_init(Game* g) {
 	g->upg[1].level = 0;
 	g->upg[1].max_level = 3;
 
-	// 📦 [인덱스 2] 대안 B: 원두 대량 도매 구매 상품 추가
+	// [인덱스 2] 원두 대량 도매 구매 상품 추가
 	strcpy_s(g->upg[2].name, sizeof(g->upg[2].name), "원두 자루(x10)");
 	strcpy_s(g->upg[2].desc, sizeof(g->upg[2].desc), "원두 재고를 도매가로 10개 대량 확보합니다.");
-	g->upg[2].base_cost = 1500; // 도매가라 10개에 1500원 (인게임 긴급 충전보다 훨씬 저렴!)
+	g->upg[2].base_cost = 1500;
 	g->upg[2].level = 0;
-	g->upg[2].max_level = 999; // 소모품이므로 만렙 제한을 사실상 무제한으로 설정
+	g->upg[2].max_level = 999;
 
-	// 📦 [인덱스 3] 대안 B: 우유 대량 도매 구매 상품 추가
+	// [인덱스 3] 우유 대량 도매 구매 상품 추가
 	strcpy_s(g->upg[3].name, sizeof(g->upg[3].name), "우유 팩 묶음(x10)");
 	strcpy_s(g->upg[3].desc, sizeof(g->upg[3].desc), "우유 재고를 도매가로 10개 대량 확보합니다.");
-	g->upg[3].base_cost = 1000; // 도매가 10개에 1000원
+	g->upg[3].base_cost = 1000;
 	g->upg[3].level = 0;
 	g->upg[3].max_level = 999;
+
+	// ☕ [인덱스 4] 레시피 해금: 바닐라 라떼
+	strcpy_s(g->upg[4].name, sizeof(g->upg[4].name), "바닐라라떼 해금");
+	strcpy_s(g->upg[4].desc, sizeof(g->upg[4].desc), "시럽이 들어간 달콤한 바닐라라떼 메뉴를 오픈합니다.");
+	g->upg[4].base_cost = 6000;
+	g->upg[4].level = 0;
+	g->upg[4].max_level = 1;
+
+	// ☕ [인덱스 5] 레시피 해금: 콜드 브루
+	strcpy_s(g->upg[5].name, sizeof(g->upg[5].name), "콜드브루 해금");
+	strcpy_s(g->upg[5].desc, sizeof(g->upg[5].desc), "얼음이 한가득 들어간 고급 깔끔한 콜드브루를 해금합니다.");
+	g->upg[5].base_cost = 9000;
+	g->upg[5].level = 0;
+	g->upg[5].max_level = 1;
 }
 
-// 기존 shop.c의 shop_buy_upgrade 함수를 사용하므로 이 함수는 비워두거나 제외해도 무방합니다.
 void upg_but(Game* g, int idx) {
-	// 필요 시 shop_buy_upgrade(g, idx)를 호출하는 래퍼 함수로 쓸 수 있습니다.
+	// 필요 시 래퍼 함수로 활용 가능
 }

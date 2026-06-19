@@ -22,6 +22,7 @@ void game_init(Game* g) {
 	g->balance = 50000; // 초기 자본금 5만원
 	g->reputation = 50; // 초기 평판 
 	g->slot_count = 1; // 기본 제조 슬롯은 1개부터 시작
+	g->shop_page = 0;  // 🎯 [명시적 추가] 첫 상점 페이지 진입 인덱스 리셋
 
 	// 초기 재료 재고 
 	g->stock[ING_BEAN] = 15;
@@ -77,6 +78,12 @@ void game_start_day(Game* g) {
 	// 쿨다운 타이머 초기화
 	g->combo = 0;
 	g->combo_timer = 0;
+
+	// 🏍️ [버그 예방 안전장치] 매일 아침 긴급 오토바이 플래그 및 타이머를 완전 리셋
+	for (int i = 0; i < MAX_INGREDIENT; i++) {
+		g->stock_refill_ms[i] = 0;
+		g->is_refilling[i] = 0;
+	}
 
 	log_push(g, "새로운 하루 영업을 개시합니다!");
 

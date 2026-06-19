@@ -177,6 +177,9 @@ typedef struct {
     // 튜토리얼 시스템
     int tutorial_page;
 
+    // 상점 페이지 내비게이션 상태 변수
+    int shop_page;
+
     // 화면 HUD 실시간 로그 피드백
     char log_lines[LOG_MAX][80];
     Uint32 log_ttl[LOG_MAX];
