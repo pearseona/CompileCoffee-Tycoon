@@ -1,186 +1,254 @@
 #define _CRT_SECURE_NO_WARNINGS
+#include <SDL.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>
+#include "../common.h"
 #include "../render.h"
 #include "../customer.h"
 
-/* ===== 손님 대기 큐 영역 렌더링 ===== */
-void draw_customer_queue(SDL_Renderer* ren, Game* g) {
+extern SDL_Texture* g_tex_customers[3];
+extern SDL_Texture* g_tex_barista;
+extern SDL_Texture* g_tex_station;
+extern SDL_Texture* g_tex_background;
+extern SDL_Texture* g_tex_menus[6];
+extern TTF_Font* g_fnt_sm;
+extern TTF_Font* g_fnt_md;
 
-	// 화면 중앙에 최대 8명의 손님 자리를 가로로 배치
-	int start_x = 40;
-	int start_y = 120;
-	int card_w = 100; // 손님 캐릭터 및 주문이 보일 사각형 카드 너비
-	int card_h = 160; // 카드 높이
-	int spacing = 12; // 손님 사이의 간격
-
-	for (int i = 0; i < MAX_QUEUE; i++) {
-		int current_x = start_x + i * (card_w + spacing);
-
-		// 손님이 실시간으로 서 있는 슬롯인 경우에만 렌더링
-		if (g->queue[i].active == 1) {
-
-			// 인내심 비율 계산
-			double patience_ratio = (double)g->queue[i].patience_ms / g->queue[i].patience_max;
-			patience_ratio = (patience_ratio < 0.0) ? 0.0 : (patience_ratio > 1.0 ? 1.0 : patience_ratio);
-
-			/*  손님 카드 배경 */
-			SDL_Rect customerCard = { current_x, start_y, card_w, card_h };
-
-			if (g->queue[i].type == CUST_WORKER) {
-				SDL_SetRenderDrawColor(ren, 100, 149, 237, 255); // 직장인: 블루
-			}
-			else if (g->queue[i].type == CUST_FOODIE) {
-				SDL_SetRenderDrawColor(ren, 218, 165, 32, 255); // 미식가: 골드
-			}
-			else if (g->queue[i].type == CUST_STUDENT) {
-				SDL_SetRenderDrawColor(ren, 143, 188, 143, 255); // 학생: 다크 그린
-			}
-			SDL_RenderFillRect(ren, &customerCard);
-
-
-			/* 주문한 음료 정보 표시 */
-			SDL_Rect orderBox = { current_x + 10, start_y + 10, card_w - 20, 30 };
-
-			if (g->queue[i].order == MENU_AMERICANO) {
-				SDL_SetRenderDrawColor(ren, 121, 85, 72, 255);   // 아메리카노: 갈색
-			}
-			else if (g->queue[i].order == MENU_LATTE) {
-				SDL_SetRenderDrawColor(ren, 245, 222, 179, 255); // 카페라떼: 베이지색
-			}
-			else if (g->queue[i].order == MENU_VANILLA_LATTE) {
-				SDL_SetRenderDrawColor(ren, 255, 239, 186, 255); // 바닐라라떼: 밝은 노란빛
-			}
-			else if (g->queue[i].order == MENU_COLD_BREW) {
-				SDL_SetRenderDrawColor(ren, 62, 39, 35, 255);    // 콜드브루: 흑갈색
-			}
-			else if (g->queue[i].order == MENU_CARAMEL_MAC) {
-				SDL_SetRenderDrawColor(ren, 216, 112, 147, 255); // 카라멜 마키아토: 핑크빛 갈색
-			}
-			else if (g->queue[i].order == MENU_ESPRESSO) {
-				SDL_SetRenderDrawColor(ren, 38, 24, 22, 255);     // 에스프레소: 진한 검은갈색
-			}
-
-			SDL_RenderFillRect(ren, &orderBox);
-
-			/* 인내심 비율에 따른 만족도 상태 (추후 이모지로 대체) */
-			SDL_Rect emojiBox = { current_x + card_w - 25, start_y + 45, 15, 15 };
-
-			if (patience_ratio > 0.5) {
-				SDL_SetRenderDrawColor(ren, 0, 255, 0, 255); // 초록 점: 좋음 😊
-			}
-			else if (patience_ratio > 0.25) {
-				SDL_SetRenderDrawColor(ren, 255, 255, 0, 255); // 노란 점: 보통 😐
-			}
-			else {
-				SDL_SetRenderDrawColor(ren, 255, 0, 0, 255);   // 빨간 점: 위험 😡) 
-			}
-
-			SDL_RenderFillRect(ren, &emojiBox);
-
-			/* 머리 위 실시간 인내심 3색 게이지 바 */
-			int gauge_max_w = card_w - 20; // 게이지 전체 너비 
-			int gauge_h = 10;
-			int gauge_x = current_x + 10;
-			int gauge_y = start_y + card_h - 25;
-
-			int current_gauge_w = (int)(gauge_max_w * patience_ratio);
-
-			// 게이지바 어두운 배경들
-			SDL_Rect bgGauge = { gauge_x, gauge_y, gauge_max_w, gauge_h };
-			SDL_SetRenderDrawColor(ren, 40, 40, 40, 255);
-			SDL_RenderFillRect(ren, &bgGauge);
-
-			// 실시간 알맹이 게이지
-			SDL_Rect fillGauge = { gauge_x, gauge_y, current_gauge_w, gauge_h };
-
-			if (patience_ratio > 0.5) {
-				SDL_SetRenderDrawColor(ren, 46, 204, 113, 255);  // 50% 이상: 안전 초록색
-			}
-			else if (patience_ratio > 0.25) {
-				SDL_SetRenderDrawColor(ren, 241, 196, 15, 255); // 25%~50%: 경고 노란색
-			}
-			else {
-				SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);  // 25% 이하: 위험 빨간색
-			}
-			SDL_RenderFillRect(ren, &fillGauge);
-		}
-		else {
-			// 손님이 없는 빈 슬롯
-			SDL_Rect emptyCard = { current_x, start_y, card_w, card_h };
-			SDL_SetRenderDrawColor(ren, 45, 45, 50, 255);
-			SDL_RenderDrawRect(ren, &emptyCard);
-		}
+void draw_game_background(SDL_Renderer* ren) {
+	if (g_tex_background) {
+		SDL_Rect bgRect = { 0, 0, SCREEN_W, SCREEN_H };
+		SDL_RenderCopy(ren, g_tex_background, NULL, &bgRect);
 	}
-
+	else {
+		SDL_SetRenderDrawColor(ren, 250, 234, 222, 255);
+		SDL_RenderClear(ren);
+	}
 }
 
-/* === 바리스타 제조 워크스테이션(슬롯) 렌더링 */
-void draw_barista_slots(SDL_Renderer* ren, Game* g) {
+void draw_procedural_cup(SDL_Renderer* ren, int x, int y, int w, int h, MenuID menu, bool completed) {
+	SDL_Rect body = { x + w / 6, y + h / 3, w * 2 / 3, h * 3 / 5 };
+	if (menu == MENU_AMERICANO) SDL_SetRenderDrawColor(ren, 109, 76, 65, 255);
+	else if (menu == MENU_LATTE) SDL_SetRenderDrawColor(ren, 222, 184, 135, 255);
+	else if (menu == MENU_VANILLA_LATTE) SDL_SetRenderDrawColor(ren, 245, 222, 179, 255);
+	else if (menu == MENU_COLD_BREW) SDL_SetRenderDrawColor(ren, 93, 64, 55, 255);
+	else if (menu == MENU_CARAMEL_MAC) SDL_SetRenderDrawColor(ren, 210, 105, 30, 255);
+	else SDL_SetRenderDrawColor(ren, 62, 39, 35, 255);
+	SDL_RenderFillRect(ren, &body);
+	SDL_SetRenderDrawColor(ren, 60, 45, 35, 255);
+	SDL_RenderDrawRect(ren, &body);
+	SDL_Rect handle = { x + w * 5 / 6 - 2, y + h / 2 - 2, w / 6, h / 4 };
+	SDL_SetRenderDrawColor(ren, 60, 45, 35, 255);
+	SDL_RenderDrawRect(ren, &handle);
+	if (completed) {
+		SDL_Rect foam = { x + w / 6 + 2, y + h / 3 + 2, w * 2 / 3 - 4, 4 };
+		SDL_SetRenderDrawColor(ren, 255, 250, 240, 255);
+		SDL_RenderFillRect(ren, &foam);
+	}
+}
 
-	int slot_start_x = 40;
-	int slot_start_y = 330; // 손님 레이어 및 공간에 배치
-	int slot_w = 140; // 제조 슬롯 상자 너비
-	int slot_h = 130; // 제조 슬롯 상자 너비
-	int slot_spacing = 20;
+void draw_customer_queue(SDL_Renderer* ren, Game* g) {
+	int spots_x[3] = { 180, 440, 700 };
+	int spot_y = 210; int card_w = 135; int card_h = 160;
+
+	for (int i = 0; i < 3; i++) {
+		int cx = spots_x[i];
+		SDL_Rect frameRect = { cx, spot_y, card_w, card_h };
+		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(ren, 255, 255, 255, 45);
+		SDL_RenderFillRect(ren, &frameRect);
+		SDL_SetRenderDrawColor(ren, 139, 106, 80, 120);
+		SDL_RenderDrawRect(ren, &frameRect);
+	}
+
+	for (int i = 0; i < 3; i++) {
+		int cx = spots_x[i];
+		if (g->queue[i].active == 1) {
+			double patience_ratio = (double)g->queue[i].patience_ms / g->queue[i].patience_max;
+			if (patience_ratio < 0.0) patience_ratio = 0.0;
+			if (patience_ratio > 1.0) patience_ratio = 1.0;
+
+			if (g->sel_cust == i) {
+				SDL_Rect selOutline = { cx - 6, spot_y - 6, card_w + 12, card_h + 12 };
+				Uint32 tick = SDL_GetTicks();
+				if ((tick / 250) % 2 == 0) {
+					SDL_SetRenderDrawColor(ren, 253, 203, 110, 255);
+					SDL_RenderDrawRect(ren, &selOutline);
+				}
+			}
+			SDL_Rect customerCard = { cx, spot_y, card_w, card_h };
+			int c_type = (int)g->queue[i].type;
+			if (c_type >= 0 && c_type < 3 && g_tex_customers[c_type]) {
+				SDL_RenderCopy(ren, g_tex_customers[c_type], NULL, &customerCard);
+			}
+			int bubble_w = 90; int bubble_h = 70; int bx = cx + 70; int by = spot_y - 80;
+			SDL_Rect bubbleRect = { bx, by, bubble_w, bubble_h };
+			SDL_SetRenderDrawColor(ren, 245, 246, 250, 255);
+			SDL_RenderFillRect(ren, &bubbleRect);
+			SDL_SetRenderDrawColor(ren, 113, 128, 147, 255);
+			SDL_RenderDrawRect(ren, &bubbleRect);
+
+			int gauge_x = bx + 4; int gauge_y = by + 5; int gauge_w = 7; int gauge_max_h = bubble_h - 10;
+			int gauge_curr_h = (int)(gauge_max_h * patience_ratio);
+			SDL_Rect gaugeBg = { gauge_x, gauge_y, gauge_w, gauge_max_h };
+			SDL_SetRenderDrawColor(ren, 87, 101, 116, 255);
+			SDL_RenderFillRect(ren, &gaugeBg);
+			SDL_Rect gaugeFill = { gauge_x, gauge_y + (gauge_max_h - gauge_curr_h), gauge_w, gauge_curr_h };
+			if (patience_ratio > 0.5) SDL_SetRenderDrawColor(ren, 46, 204, 113, 255);
+			else if (patience_ratio > 0.25) SDL_SetRenderDrawColor(ren, 241, 196, 15, 255);
+			else SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);
+			SDL_RenderFillRect(ren, &gaugeFill);
+
+			SDL_Rect iconRect = { bx + 22, by + 12, 45, 45 };
+			MenuID order_menu = g->queue[i].order;
+			if (g_tex_menus[order_menu]) SDL_RenderCopy(ren, g_tex_menus[order_menu], NULL, &iconRect);
+			else draw_procedural_cup(ren, bx + 22, by + 12, 45, 45, order_menu, true);
+
+			SDL_Color nameColor = { 47, 53, 66, 255 };
+			draw_text(ren, g_fnt_sm, g_menu[order_menu].name, bx + 16, by + bubble_h - 13, nameColor);
+		}
+	}
+}
+
+void draw_barista_slots(SDL_Renderer* ren, Game* g) {
+	SDL_Rect counterLine = { 0, 370, SCREEN_W, 10 };
+	SDL_SetRenderDrawColor(ren, 115, 80, 60, 255);
+	SDL_RenderFillRect(ren, &counterLine);
+	SDL_Rect machineBg = { 50, 360, 250, 160 };
+	SDL_SetRenderDrawColor(ren, 127, 140, 141, 255);
+	SDL_RenderFillRect(ren, &machineBg);
+	SDL_SetRenderDrawColor(ren, 189, 195, 199, 255);
+	SDL_RenderDrawRect(ren, &machineBg);
+	SDL_Rect machineHeader = { 50, 360, 250, 25 };
+	SDL_SetRenderDrawColor(ren, 44, 62, 80, 255);
+	SDL_RenderFillRect(ren, &machineHeader);
+	SDL_Color white = { 255, 255, 255, 255 };
+	draw_text(ren, g_fnt_sm, "☕ CUTE ESPRESSO MACHINE", 65, 365, white);
 
 	for (int i = 0; i < g->slot_count; i++) {
-		int current_slot_x = slot_start_x + i * (slot_w + slot_spacing);
-		SDL_Rect slotRect = { current_slot_x, slot_start_y, slot_w, slot_h };
-
-		// 슬롯 상태별 테두리 및 내부 배경 색상 분기
-		if (g->slots[i].state == SLOT_EMPTY) {
-			// 빈 대기 상태 워크스테이션 (어두운 회색)
-			SDL_SetRenderDrawColor(ren, 45, 45, 48, 255);
-			SDL_RenderFillRect(ren, &slotRect);
-			SDL_SetRenderDrawColor(ren, 70, 70, 75, 255);
-			SDL_RenderDrawRect(ren, &slotRect);
+		int sx = 70 + i * 80; int sy = 400; SDL_Rect cupSpot = { sx, sy, 60, 80 };
+		if (g->sel_slot == i) {
+			SDL_Rect selSlotOutline = { sx - 4, sy - 4, 68, 88 };
+			SDL_SetRenderDrawColor(ren, 254, 202, 87, 255);
+			SDL_RenderDrawRect(ren, &selSlotOutline);
 		}
-		else if (g->slots[i].state == SLOT_BREWING) {
-			// 음료 추출
-			SDL_SetRenderDrawColor(ren, 141, 110, 99, 255);
-			SDL_RenderFillRect(ren, &slotRect);
+		SDL_Rect nozzle = { sx + 22, sy - 12, 16, 12 };
+		SDL_SetRenderDrawColor(ren, 52, 73, 94, 255);
+		SDL_RenderFillRect(ren, &nozzle);
 
-			// 제조 중인 메뉴 (고유 색으로 메뉴판 박스 표시)
-			SDL_Rect miniMenuBox = { current_slot_x + 15, slot_start_y + 15, slot_w - 30, 25 };
-			MenuID mid = g->slots[i].menu;
-			if (mid == MENU_AMERICANO) SDL_SetRenderDrawColor(ren, 121, 85, 72, 255);
-			else if (mid == MENU_LATTE) SDL_SetRenderDrawColor(ren, 245, 222, 179, 255);
-			else SDL_SetRenderDrawColor(ren, 38, 24, 22, 255);
-			SDL_RenderFillRect(ren, &miniMenuBox);
-
-			// 실시간 바리스타 작업 게이지 바 누적 렌더링
-			int brew_bar_max_w = slot_w - 30;
-			int brew_bar_h = 15;
-			int brew_bar_x = current_slot_x + 15;
-			int brew_bar_y = slot_start_y + slot_h - 35;
-
-			// 누적 비율 계산
-			float brew_ratio = (float)g->slots[i].elapsed_ms / g->slots[i].required_ms;
+		SlotState state = g->slots[i].state;
+		if (state == SLOT_EMPTY) {
+			SDL_SetRenderDrawColor(ren, 90, 105, 120, 180);
+			SDL_RenderFillRect(ren, &cupSpot);
+			SDL_Color textGray = { 200, 214, 229, 255 };
+			char numStr[128];
+			sprintf_s(numStr, sizeof(numStr), "#%d 빈슬롯", i + 1);
+			draw_text(ren, g_fnt_sm, numStr, sx + 5, sy + 32, textGray);
+		}
+		else if (state == SLOT_BREWING) {
+			SDL_SetRenderDrawColor(ren, 149, 175, 192, 255);
+			SDL_RenderFillRect(ren, &cupSpot);
+			draw_procedural_cup(ren, sx, sy + 20, 60, 60, g->slots[i].menu, false);
+			Uint32 tick = SDL_GetTicks();
+			if ((tick / 150) % 2 == 0) {
+				SDL_Rect drip = { sx + 28, sy, 4, 20 };
+				SDL_SetRenderDrawColor(ren, 139, 69, 19, 255);
+				SDL_RenderFillRect(ren, &drip);
+			}
+			int bar_max_w = 50; float brew_ratio = (float)g->slots[i].elapsed_ms / g->slots[i].required_ms;
 			if (brew_ratio > 1.0f) brew_ratio = 1.0f;
-			int brew_bar_current_w = (int)(brew_bar_max_w * brew_ratio);
+			int bar_curr_w = (int)(bar_max_w * brew_ratio);
+			SDL_Rect progressBg = { sx + 5, sy + 5, bar_max_w, 6 };
+			SDL_SetRenderDrawColor(ren, 87, 101, 116, 255);
+			SDL_RenderFillRect(ren, &progressBg);
+			SDL_Rect progressFill = { sx + 5, sy + 5, bar_curr_w, 6 };
+			SDL_SetRenderDrawColor(ren, 9, 132, 227, 255);
+			SDL_RenderFillRect(ren, &progressFill);
+		}
+		else if (state == SLOT_DONE) {
+			SDL_SetRenderDrawColor(ren, 108, 92, 231, 100);
+			SDL_RenderFillRect(ren, &cupSpot);
+			draw_procedural_cup(ren, sx, sy + 20, 60, 60, g->slots[i].menu, true);
+			Uint32 tick = SDL_GetTicks(); int steam_offset = (tick / 200) % 3;
+			SDL_SetRenderDrawColor(ren, 255, 255, 255, 180);
+			SDL_RenderDrawLine(ren, sx + 20 + steam_offset, sy + 15, sx + 20 + steam_offset, sy + 5);
+			SDL_Color textGreen = { 76, 209, 55, 255 };
+			draw_text(ren, g_fnt_sm, "★완료★", sx + 8, sy + 2, textGreen);
+		}
+	}
 
-			// 게이지 배경
-			SDL_Rect bgBrewBar = { brew_bar_x, brew_bar_y, brew_bar_max_w, brew_bar_h };
-			SDL_SetRenderDrawColor(ren, 60, 60, 60, 255);
-			SDL_RenderFillRect(ren, &bgBrewBar);
+	if (g->sel_slot >= 0 && g->sel_slot < g->slot_count && g->slots[g->sel_slot].state == SLOT_EMPTY) {
+		int mx_start = 320; int my_start = 410;
+		SDL_Rect menuPanel = { mx_start, my_start, 355, 85 };
+		SDL_SetRenderDrawColor(ren, 75, 58, 46, 245);
+		SDL_RenderFillRect(ren, &menuPanel);
+		SDL_SetRenderDrawColor(ren, 253, 203, 110, 255);
+		SDL_RenderDrawRect(ren, &menuPanel);
+		SDL_Color goldText = { 253, 203, 110, 255 };
+		draw_text(ren, g_fnt_sm, "제조할 음료를 선택하세요 (키보드 Q,W,E,R,T,Y)", mx_start + 15, my_start + 5, goldText);
 
-			// 차오르는 게이지
-			SDL_Rect fillBrewBar = { brew_bar_x, brew_bar_y, brew_bar_current_w, brew_bar_h };
-			SDL_SetRenderDrawColor(ren, 52, 152, 219, 255); // 블루
-			SDL_RenderFillRect(ren, &fillBrewBar);
-
-			if (g->slots[i].state == SLOT_DONE) {
-				// 제조 완료 서빙 대기
-				SDL_SetRenderDrawColor(ren, 38, 166, 154, 255); // 민트/네온 그린
-				SDL_RenderFillRect(ren, &slotRect);
-
-				// 상단에 완성 알림 표시
-				SDL_Rect alertBox = { current_slot_x + 15, slot_start_y + 15, slot_w - 30, 45 };
-				SDL_SetRenderDrawColor(ren, 240, 240, 240, 255); // 흰색
-				SDL_RenderFillRect(ren, &alertBox);
+		char* hotkeys[6] = { "Q", "W", "E", "R", "T", "Y" };
+		for (int i = 0; i < 6; i++) {
+			int bx = mx_start + 10 + i * 56; int by = my_start + 26; SDL_Rect btnRect = { bx, by, 45, 45 };
+			if (g_menu[i].unlocked) {
+				SDL_SetRenderDrawColor(ren, 115, 96, 83, 255);
+				SDL_RenderFillRect(ren, &btnRect);
+				if (g_tex_menus[i]) SDL_RenderCopy(ren, g_tex_menus[i], NULL, &btnRect);
+				else draw_procedural_cup(ren, bx, by, 45, 45, (MenuID)i, true);
+				SDL_Color wt = { 255, 255, 255, 255 };
+				draw_text(ren, g_fnt_sm, hotkeys[i], bx + 18, by + 12, wt);
+			}
+			else {
+				SDL_SetRenderDrawColor(ren, 50, 40, 35, 255);
+				SDL_RenderFillRect(ren, &btnRect);
+				SDL_Color lockGray = { 150, 140, 135, 255 };
+				draw_text(ren, g_fnt_sm, "🔒", bx + 14, by + 12, lockGray);
 			}
 		}
+	}
+	else {
+		int mx_start = 320; int my_start = 410;
+		SDL_Rect infoPanel = { mx_start, my_start, 355, 85 };
+		SDL_SetRenderDrawColor(ren, 60, 47, 38, 200);
+		SDL_RenderFillRect(ren, &infoPanel);
+		SDL_Color tipColor = { 245, 246, 250, 255 };
+		char tipBuf[128];
+		if (g->sel_slot >= 0 && g->slots[g->sel_slot].state == SLOT_BREWING) {
+			sprintf_s(tipBuf, sizeof(tipBuf), "[슬롯 %d] %s 제조 중...", g->sel_slot + 1, g_menu[g->slots[g->sel_slot].menu].name);
+			draw_text(ren, g_fnt_md, tipBuf, mx_start + 20, my_start + 18, tipColor);
+		}
+		else if (g->sel_slot >= 0 && g->slots[g->sel_slot].state == SLOT_DONE) {
+			sprintf_s(tipBuf, sizeof(tipBuf), "[슬롯 %d] %s 완성 완료!", g->sel_slot + 1, g_menu[g->slots[g->sel_slot].menu].name);
+			draw_text(ren, g_fnt_md, tipBuf, mx_start + 20, my_start + 18, tipColor);
+		}
+		else {
+			draw_text(ren, g_fnt_md, "제조할 머신의 슬롯을 마우스로 선택하세요.", mx_start + 20, my_start + 30, tipColor);
+		}
+	}
 
+	int stock_x = 690; int stock_y = 410; SDL_Rect stockPanel = { stock_x, stock_y, 250, 85 };
+	SDL_SetRenderDrawColor(ren, 48, 57, 82, 220);
+	SDL_RenderFillRect(ren, &stockPanel);
+	SDL_Color wt = { 255, 255, 255, 255 };
+	draw_text(ren, g_fnt_sm, "재고 상황 (부족 시 제조 불가)", stock_x + 10, stock_y + 5, wt);
+
+	SDL_Color stockColors[5] = { {110, 76, 65, 255}, {255, 255, 255, 255}, {254, 202, 87, 255}, {255, 223, 230, 255}, {116, 185, 255, 255} };
+	const char* stockShortNames[5] = { "원두", "우유", "시럽", "크림", "얼음" };
+
+	for (int i = 0; i < 5; i++) {
+		int ix = stock_x + 8 + i * 48;
+		int iy = stock_y + 28;
+		SDL_Rect iconB = { ix, iy, 38, 22 };
+
+		SDL_SetRenderDrawColor(ren, stockColors[i].r, stockColors[i].g, stockColors[i].b, 255);
+		SDL_RenderFillRect(ren, &iconB);
+
+		SDL_Color txtW = { 255, 255, 255, 255 };
+		draw_text(ren, g_fnt_sm, stockShortNames[i], ix + 4, iy + 2, (i == 1) ? (SDL_Color) { 0, 0, 0, 255 } : txtW);
+
+		char countStr[16];
+		sprintf_s(countStr, sizeof(countStr), "x%d", g->stock[i]);
+		SDL_Color countColor = (g->stock[i] <= 3) ? (SDL_Color) { 231, 76, 60, 255 } : (SDL_Color) { 220, 221, 230, 255 };
+		draw_text(ren, g_fnt_sm, countStr, ix + 6, iy + 25, countColor);
 	}
 }
-
-

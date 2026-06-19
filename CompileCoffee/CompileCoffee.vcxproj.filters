@@ -75,4 +75,23 @@
   <ItemGroup>
     <None Include=".gitignore" />
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="..\font.ttf">
+      <Filter>소스 파일</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="background.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="customer_0.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="customer_1.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="customer_2.bmp">
+      <Filter>리소스 파일</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

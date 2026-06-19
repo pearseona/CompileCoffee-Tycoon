@@ -16,4 +16,5 @@
 *.exe
 *.idb
 *.log
-*.tlog
+*.tlog*.vcxproj 
+*.vcxproj.filters 
