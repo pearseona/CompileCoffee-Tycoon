@@ -95,6 +95,8 @@ int main(int argc, char* argv[]) {
 
 				if (myGame.state == STATE_PLAYING) {
 					bool clicked_slot = false;
+
+					// 1. 머신 제조 슬롯 마우스 클릭 감지
 					for (int i = 0; i < myGame.slot_count; i++) {
 						int sx = 70 + i * 80;
 						int sy = 400;
@@ -107,8 +109,10 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
+					// 2. 대기 손님 구역 마우스 클릭 감지 및 서빙 연동
+					int spots_x[3] = { 180, 440, 700 };
 					for (int i = 0; i < 3; i++) {
-						int cx = 180 + i * 260;
+						int cx = spots_x[i];
 						int cy = 210;
 						if (myGame.queue[i].active && mx >= cx && mx <= cx + 135 && my >= cy && my <= cy + 160) {
 							myGame.sel_cust = i;
@@ -124,19 +128,28 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
+					// 3. 하단 미니 메뉴판 마우스 가상 클릭 패널 범위 보정 수선
 					if (!clicked_slot && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.slots[myGame.sel_slot].state == SLOT_EMPTY) {
 							for (int i = 0; i < 6; i++) {
-								int ix = 330 + i * 55;
-								int iy = 425;
+								int ix = 330 + i * 56;
+								int iy = 436;
 								if (mx >= ix && mx <= ix + 45 && my >= iy && my <= iy + 45) {
-									if (g_menu[i].unlocked) {
-										brew_start(&myGame, myGame.sel_slot, 0, (MenuID)i);
+									int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
+
+									// 🛡️ 마우스 클릭 시에도 유령 손님 예외 방지 필터링 보강
+									if (myGame.queue[target_qi].active) {
+										if (g_menu[i].unlocked) {
+											brew_start(&myGame, myGame.sel_slot, target_qi, (MenuID)i);
+										}
+										else {
+											char lock_msg[80];
+											sprintf_s(lock_msg, sizeof(lock_msg), "%s 메뉴는 상점에서 먼저 해금해야 합니다!", g_menu[i].name);
+											log_push(&myGame, lock_msg);
+										}
 									}
 									else {
-										char lock_msg[80];
-										sprintf_s(lock_msg, sizeof(lock_msg), "%s 메뉴는 상점에서 먼저 해금해야 합니다!", g_menu[i].name);
-										log_push(&myGame, lock_msg);
+										log_push(&myGame, "⚠️ 음료를 주문한 손님(좌석)을 먼저 선택해 주세요.");
 									}
 									break;
 								}
@@ -146,15 +159,13 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			else if (ev.type == SDL_KEYDOWN) {
+				int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
+
 				switch (ev.key.keysym.sym) {
 				case SDLK_1:
 					if (myGame.state == STATE_PLAYING) {
 						myGame.sel_slot = 0;
 						log_push(&myGame, "제조 슬롯 1을 선택했습니다.");
-					}
-					else if (myGame.state == STATE_CLOSING) {
-						myGame.state = STATE_UPGRADE;
-						log_push(&myGame, "상점에 입장했습니다. 필요한 업그레이드를 진행하세요.");
 					}
 					break;
 				case SDLK_2:
@@ -180,14 +191,10 @@ int main(int argc, char* argv[]) {
 					}
 					break;
 				case SDLK_8:
-					if (myGame.state == STATE_UPGRADE) {
-						shop_buy_upgrade(&myGame, 0);
-					}
+					if (myGame.state == STATE_UPGRADE) shop_buy_upgrade(&myGame, 0);
 					break;
 				case SDLK_9:
-					if (myGame.state == STATE_UPGRADE) {
-						shop_buy_upgrade(&myGame, 1);
-					}
+					if (myGame.state == STATE_UPGRADE) shop_buy_upgrade(&myGame, 1);
 					break;
 				case SDLK_RETURN:
 					if (myGame.state == STATE_UPGRADE) {
@@ -196,36 +203,69 @@ int main(int argc, char* argv[]) {
 						myGame.sel_cust = -1;
 					}
 					break;
+
+					// 🛠️ [Q ~ Y 단축키 구역] 유령 손님 액세스 위반(0xC0000005) 방어막 주입 완료!
 				case SDLK_q:
-					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) {
-						if (g_menu[MENU_AMERICANO].unlocked) brew_start(&myGame, myGame.sel_slot, 0, MENU_AMERICANO);
+					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
+						if (myGame.queue[target_qi].active && g_menu[MENU_AMERICANO].unlocked) {
+							brew_start(&myGame, myGame.sel_slot, target_qi, MENU_AMERICANO);
+						}
+						else if (!myGame.queue[target_qi].active) {
+							log_push(&myGame, "⚠️ 해당 자리에 음료를 주문한 손님이 없습니다.");
+						}
 					}
 					break;
 				case SDLK_w:
-					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) {
-						if (g_menu[MENU_LATTE].unlocked) brew_start(&myGame, myGame.sel_slot, 0, MENU_LATTE);
+					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
+						if (myGame.queue[target_qi].active && g_menu[MENU_LATTE].unlocked) {
+							brew_start(&myGame, myGame.sel_slot, target_qi, MENU_LATTE);
+						}
+						else if (!myGame.queue[target_qi].active) {
+							log_push(&myGame, "⚠️ 해당 자리에 음료를 주문한 손님이 없습니다.");
+						}
 					}
 					break;
 				case SDLK_e:
-					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) {
-						if (g_menu[MENU_VANILLA_LATTE].unlocked) brew_start(&myGame, myGame.sel_slot, 0, MENU_VANILLA_LATTE);
+					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
+						if (myGame.queue[target_qi].active && g_menu[MENU_VANILLA_LATTE].unlocked) {
+							brew_start(&myGame, myGame.sel_slot, target_qi, MENU_VANILLA_LATTE);
+						}
+						else if (!myGame.queue[target_qi].active) {
+							log_push(&myGame, "⚠️ 해당 자리에 음료를 주문한 손님이 없습니다.");
+						}
 					}
 					break;
 				case SDLK_r:
-					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) {
-						if (g_menu[MENU_COLD_BREW].unlocked) brew_start(&myGame, myGame.sel_slot, 0, MENU_COLD_BREW);
+					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
+						if (myGame.queue[target_qi].active && g_menu[MENU_COLD_BREW].unlocked) {
+							brew_start(&myGame, myGame.sel_slot, target_qi, MENU_COLD_BREW);
+						}
+						else if (!myGame.queue[target_qi].active) {
+							log_push(&myGame, "⚠️ 해당 자리에 음료를 주문한 손님이 없습니다.");
+						}
 					}
 					break;
 				case SDLK_t:
-					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) {
-						if (g_menu[MENU_CARAMEL_MAC].unlocked) brew_start(&myGame, myGame.sel_slot, 0, MENU_CARAMEL_MAC);
+					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
+						if (myGame.queue[target_qi].active && g_menu[MENU_CARAMEL_MAC].unlocked) {
+							brew_start(&myGame, myGame.sel_slot, target_qi, MENU_CARAMEL_MAC);
+						}
+						else if (!myGame.queue[target_qi].active) {
+							log_push(&myGame, "⚠️ 해당 자리에 음료를 주문한 손님이 없습니다.");
+						}
 					}
 					break;
 				case SDLK_y:
-					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) {
-						if (g_menu[MENU_ESPRESSO].unlocked) brew_start(&myGame, myGame.sel_slot, 0, MENU_ESPRESSO);
+					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
+						if (myGame.queue[target_qi].active && g_menu[MENU_ESPRESSO].unlocked) {
+							brew_start(&myGame, myGame.sel_slot, target_qi, MENU_ESPRESSO);
+						}
+						else if (!myGame.queue[target_qi].active) {
+							log_push(&myGame, "⚠️ 해당 자리에 음료를 주문한 손님이 없습니다.");
+						}
 					}
 					break;
+
 				case SDLK_a:
 					if (myGame.state == STATE_PLAYING && myGame.queue[0].active) myGame.sel_cust = 0;
 					break;
