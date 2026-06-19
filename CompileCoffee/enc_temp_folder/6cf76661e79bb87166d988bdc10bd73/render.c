@@ -125,7 +125,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 
 		char uiBuf[256];
 		// 인게임 실시간 창고 재고 현황판 HUD 추가 연동 (가시성 고도화 점수 확보!)
-		sprintf_s(uiBuf, sizeof(uiBuf), "🪙 %d원  [평판: %d/100]", g->balance, g->reputation, g->stock[ING_BEAN], g->stock[ING_MILK]);
+		sprintf_s(uiBuf, sizeof(uiBuf), "🪙 %d원  [평판: %d/100]  🫘원두:%d  🥛우유:%d", g->balance, g->reputation, g->stock[ING_BEAN], g->stock[ING_MILK]);
 		draw_text(ren, g_fnt_md, uiBuf, 25, 24, text_gold);
 
 		sprintf_s(uiBuf, sizeof(uiBuf), "DAY %02d", g->day);

@@ -150,6 +150,9 @@ typedef struct {
     // 원자재 재고 창고
     int stock[MAX_INGREDIENT];
 
+    int stock_refill_ms[MAX_INGREDIENT];
+    int is_refilling[MAX_INGREDIENT];
+
     // 콤보 시스템
     int combo, max_combo;
     Uint32 combo_timer;

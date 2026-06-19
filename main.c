@@ -157,22 +157,38 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
-				// 🎯 2. 상점 정비 단계(STATE_UPGRADE) 핑크 카드 마우스 클릭 판정 
+				// 🎯 2. 상점 정비 단계(STATE_UPGRADE) 4열 파스텔 핑크 카드 마우스 클릭 판정 수선
 				else if (myGame.state == STATE_UPGRADE) {
-					int card_y = 250;
-					int card_w = (SCREEN_W - 170) / 2; // 2열 가로폭 수식 동기화
-					int card_h = 145;
-					int right_x = 70 + card_w + 30;    // 우측 카드 시작점 마진 계산
+					int card_y = 245;  // render.c 규격에 맞춰 245로 보정
+					int card_w = 200;  // 4열 컴팩트 가로폭 200px
+					int card_h = 160;  // 세로폭 160px 확장 반영
+					int gap = 8;       // 카드 간격 오프셋
 
-					// 🔨 좌측 핑크 카드 (제조 슬롯 확장) 영역 클릭 패널
-					if (mx >= 70 && mx <= 70 + card_w && my >= card_y && my <= card_y + card_h) {
-						printf("[INPUT] 마우스 핑크 카드 클릭: 슬롯 확장 결제 시도\n");
+					// render.c와 100% 일치하는 각 카드의 가로 시작 좌표(X축) 계산식
+					int x0 = 70;
+					int x1 = x0 + card_w + gap;
+					int x2 = x1 + card_w + gap;
+					int x3 = x2 + card_w + gap;
+
+					// 🔨 [인덱스 0] 좌측 1열 카드: 제조 슬롯 확장 클릭
+					if (mx >= x0 && mx <= x0 + card_w && my >= card_y && my <= card_y + card_h) {
+						printf("[INPUT] 마우스 클릭: 제조 슬롯 확장 결제 시도\n");
 						shop_buy_upgrade(&myGame, 0);
 					}
-					// ⚡ 우측 핑크 카드 (고속 커피 머신 도입) 영역 클릭 패널
-					else if (mx >= right_x && mx <= right_x + card_w && my >= card_y && my <= card_y + card_h) {
-						printf("[INPUT] 마우스 핑크 카드 클릭: 머신 속도 강화 결제 시도\n");
+					// ⚡ [인덱스 1] 좌측 2열 카드: 고속 커피 머신 도입 클릭
+					else if (mx >= x1 && mx <= x1 + card_w && my >= card_y && my <= card_y + card_h) {
+						printf("[INPUT] 마우스 클릭: 머신 가속 강화 결제 시도\n");
 						shop_buy_upgrade(&myGame, 1);
+					}
+					// 🫘 [인덱스 2] 좌측 3열 카드: 대안 B 원두 자루 도매 구매 클릭
+					else if (mx >= x2 && mx <= x2 + card_w && my >= card_y && my <= card_y + card_h) {
+						printf("[INPUT] 마우스 클릭: 원두 도매 대량 구매(x10) 결제 시도\n");
+						shop_buy_upgrade(&myGame, 2);
+					}
+					// 🥛 [인덱스 3] 좌측 4열 카드: 대안 B 우유 묶음 도매 구매 클릭
+					else if (mx >= x3 && mx <= x3 + card_w && my >= card_y && my <= card_y + card_h) {
+						printf("[INPUT] 마우스 클릭: 우유 도매 대량 구매(x10) 결제 시도\n");
+						shop_buy_upgrade(&myGame, 3);
 					}
 				}
 			}

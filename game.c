@@ -45,22 +45,11 @@ void game_init(Game* g) {
 	// 에스프레소 (원두 2)
 	g_menu[MENU_ESPRESSO] = (MenuInfo){ "에스프레소", 3500, 800, 1000, {2, 0, 0, 0, 0}, 1 };
 
-	// 상점 업그레이드 품목 초기화 
-	strcpy_s(g->upg[0].name, sizeof(g->upg[0].name), "제조 슬롯 확장");
-	strcpy_s(g->upg[0].desc, sizeof(g->upg[0].desc), "동시에 음료를 제조할 수 있는 슬롯을 추가합니다.");
-	g->upg[0].base_cost = 3000;
-	g->upg[0].level = 1;
-	g->upg[0].max_level = MAX_BREW_SLOTS;
-
-	strcpy_s(g->upg[1].name, sizeof(g->upg[1].name), "머신 속도 향상");
-	strcpy_s(g->upg[1].desc, sizeof(g->upg[1].desc), "음료 제조 속도가 15% 빨라집니다.");
-	g->upg[1].base_cost = 25000;
-	g->upg[1].level = 0;
-	g->upg[1].max_level = 3;
+	// 🎯 오타 수정 연동 완료 (upg_int -> upg_init)
+	upg_init(g);
 
 	// 손님, 이벤트 랜덤
 	srand((unsigned int)time(NULL));
-
 	log_push(g, "컴파일 커피에 오신 것을 환영합니다!");
 }
 
@@ -179,6 +168,44 @@ void game_update(Game* g, Uint32 dt) {
 
 	// 음료 제조 진행 상태 업데이트 
 	brew_update(g, dt);
+
+	/* 🏍️ 재고 자동 긴급 충전 (대안 A) */
+	for (int i = 0; i < MAX_INGREDIENT; i++) {
+		if (i == ING_BEAN || i == ING_MILK) {
+			if (g->stock[i] <= 0) {
+				// 재고가 없는데 아직 쿨타임이 가동되지 않았다면 타이머 세팅
+				if (!g->is_refilling[i]) {
+					g->is_refilling[i] = 1;
+					g->stock_refill_ms[i] = 5000; // 5초 쿨타임 스타트
+					log_push(g, (i == ING_BEAN) ? "⚠️ 원두 고갈! 퀵 오토바이 배달 요청 중..." : "⚠️ 우유 고갈! 긴급 퀵 배달 요청 중...");
+				}
+
+				g->stock_refill_ms[i] -= dt;
+
+				// 5초가 다 지나면 정산 처리
+				if (g->stock_refill_ms[i] <= 0) {
+					int penalty_cost = (i == ING_BEAN) ? 400 : 250; // 긴급 패널티 단가
+
+					if (g->balance >= penalty_cost) {
+						g->balance -= penalty_cost;
+						g->stock[i] += 1; // 긴급 구호 물품 1개 수급 완료
+						g->is_refilling[i] = 0; // 플래그 클리어
+
+						char refill_msg[80];
+						sprintf_s(refill_msg, sizeof(refill_msg), "🏍️ 긴급 배달 완료: %s +1 (비용 -%d원)", (i == ING_BEAN) ? "원두" : "우유", penalty_cost);
+						log_push(g, refill_msg);
+					}
+					else {
+						g->stock_refill_ms[i] = 1000; // 소지금 부족 시 1초 지연 유예
+					}
+				}
+			}
+			else {
+				// 재고가 차 있다면 상태 초기화
+				g->is_refilling[i] = 0;
+			}
+		}
+	}
 }
 
 /* 🛠️ 실시간 알림 로그 푸시 (render.c 출력 규격에 100% 연동 동기화 패치) */
