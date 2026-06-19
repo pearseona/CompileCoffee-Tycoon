@@ -81,19 +81,16 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\customer_1.bmp">
+    <Image Include="background.png">
       <Filter>리소스 파일</Filter>
     </Image>
-    <Image Include="..\..\..\..\customer_2.bmp">
+    <Image Include="customer_0.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
-    <Image Include="..\..\..\..\barista.bmp">
+    <Image Include="customer_1.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
-    <Image Include="..\..\..\..\customer_0.bmp">
-      <Filter>리소스 파일</Filter>
-    </Image>
-    <Image Include="..\..\..\..\background.bmp">
+    <Image Include="customer_2.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

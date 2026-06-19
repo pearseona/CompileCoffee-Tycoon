@@ -26,6 +26,7 @@
 #define COMBO_TIMEOUT_MS 7000 // 콤보 유지 시간 제한 (7초)
 #define COMBO_COOL_DOWN_MS 5000 // 콤보 잠금 해제까지 걸리는 시간 (5초)
 #define LOG_MAX 6 // 인게임 HUD에 노출할 최근 로그 수
+#define MAX_LOG_LINES LOG_MAX
 #define GOAL_PROFIT 1500000 // 최종 승리 조건: 누적 순이익 150만원
 
 /* 열거형(Enum) 정의*/
@@ -209,7 +210,7 @@ void brew_cancel(Game* g, int slot_idx);
 
 // upgrade.c
 void upg_init(Game* g);
-void upg_buy(Game* g, int idx);
+// void upg_buy(Game* g, int idx);
 
 // save.c
 void save_record(Game* g);
