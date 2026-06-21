@@ -85,9 +85,34 @@ void game_start_day(Game* g) {
 		g->is_refilling[i] = 0;
 	}
 
+	// 기존 일일 잔여 이벤트 메세지 캐시 소독
+	memset(g->event_msg, 0, sizeof(g->event_msg));
+	g->event_ms = 0;
+
 	log_push(g, "새로운 하루 영업을 개시합니다!");
 
-	/* 이벤트 NPC 확률 시스템 */
+	/* 🎯 [난수 가중치 제어]: 피크타임 및 돌발 이벤트 테마 주사위 굴리기 */
+	int day_roll = rand() % 100;
+
+	if (day_roll < 25) {
+		// 25% 확률로 직장인 대거 스폰 러시 발동!
+		strcpy_s(g->event_msg, sizeof(g->event_msg), "RUSH_WORKER");
+		g->event_ms = 35000; // 영업 시작 후 35초간 지옥의 피크타임 유지
+		log_push(g, "🔥 [피크타임] 점심 직장인 러시 발동! 35초간 손님이 쏟아집니다!");
+	}
+	else if (day_roll >= 25 && day_roll < 45) {
+		// 20% 확률로 박리다매 학생 단체 카공족 러시 발동!
+		strcpy_s(g->event_msg, sizeof(g->event_msg), "RUSH_STUDENT");
+		g->event_ms = 30000; // 30초간 학생 피크타임
+		log_push(g, "⚡ [피크타임] 근처 대학 종강일! 학생 손님들이 물밀기듯 찾아옵니다!");
+	}
+	else {
+		// 55% 확률로 평화롭고 한적한 일반 매장 운영
+		strcpy_s(g->event_msg, sizeof(g->event_msg), "NORMAL");
+		log_push(g, "☕ 매장이 비교적 한산합니다. 여유롭게 장사를 준비하세요.");
+	}
+
+	/* 이벤트 NPC 확률 시스템 (기존 레거시 유지) */
 	int npc_roll = rand() % 100;
 
 	if (npc_roll < 20) {
@@ -142,6 +167,18 @@ void game_update(Game* g, Uint32 dt) {
 		g->day_ms = 0;
 		game_close_day(g); // 90초 타임아웃 시 강제 상점 연계 함수 가동
 		return;
+	}
+
+	/* 🎯 피크타임 타이머 실시간 감산 차감 가동 */
+	if (g->event_ms > 0) {
+		if (g->event_ms > (int)dt) {
+			g->event_ms -= dt;
+		}
+		else {
+			g->event_ms = 0;
+			log_push(g, "✨ 피크타임 러시가 무사히 종료되어 매장이 안정화되었습니다.");
+			strcpy_s(g->event_msg, sizeof(g->event_msg), "NORMAL");
+		}
 	}
 
 	/* 콤보 유지 및 락다운 타이머 */
