@@ -191,7 +191,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_SetRenderDrawColor(ren, 64, 48, 38, 255);
 		SDL_RenderFillRect(ren, &timeBarBg);
 
-		float time_ratio = (float)g->day_ms / 60000.0f;
+		float time_ratio = (float)g->day_ms / (DAY_SEC * 1000.0f);
 		if (time_ratio < 0.0f) time_ratio = 0.0f;
 		if (time_ratio > 1.0f) time_ratio = 1.0f;
 		int time_curr_w = (int)(bar_max_w * time_ratio);
@@ -389,6 +389,69 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		draw_text(ren, g_fnt_sm, "➔ 키보드 [◀]/[▶] 방향키로 상점 페이지 전환! 정비 완료 후 [Enter] 영업 개시", 90, 530, text_white);
 
 		// 🎯 [잔상 로그 파괴 완치]: 상점 모듈 내부일 땐 하단에 인게임용 겹침 로그가 절대 뜨지 않도록 완벽 필터 아웃!
+	}
+
+	/* ================= 🏆 STATE_HIGHSCORE: 대우승(성공) 엔딩 창 화면 ================= */
+	else if (g->state == STATE_HIGHSCORE) {
+		draw_game_background(ren);
+
+		SDL_Rect winFrame = { 150, 100, SCREEN_W - 300, 420 };
+		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(ren, 27, 38, 59, 245); // 고급스러운 로열 네이비 톤 장막
+		SDL_RenderFillRect(ren, &winFrame);
+		SDL_SetRenderDrawColor(ren, 254, 202, 87, 255);
+		SDL_RenderDrawRect(ren, &winFrame);
+
+		draw_text(ren, g_fnt_lg, "🎉 대 승 리 ! 축 하 합 니 다 🎉", SCREEN_W / 2 - 160, 140, text_gold);
+
+		char endBuf[256];
+		sprintf_s(endBuf, sizeof(endBuf), "최종 경영 정산 자산: 🪙 %d원", g->balance);
+		draw_text(ren, g_fnt_md, endBuf, 240, 220, text_white);
+		draw_text(ren, g_fnt_sm, "선아 점장님의 카페가 15일 만에 업계 최고의 명품 핫플레이스로 등극했다냥!", 240, 270, text_gold);
+		draw_text(ren, g_fnt_sm, "목표 120만원을 가뿐히 돌파하여 억대 연봉 바리스타 타이틀을 쟁취했습니다.", 240, 300, text_white);
+
+		// 🎯 버튼 1: [게임 다시 하기] (X: 250 ~ 430, Y: 390 ~ 440)
+		SDL_Rect btnRetry = { 250, 390, 180, 50 };
+		SDL_SetRenderDrawColor(ren, 46, 204, 113, 255); // 화사한 초록색
+		SDL_RenderFillRect(ren, &btnRetry);
+		draw_text(ren, g_fnt_md, "🔄 다시 하기", 285, 402, text_white);
+
+		// 🎯 버튼 2: [홈으로 가기] (X: 530 ~ 710, Y: 390 ~ 440)
+		SDL_Rect btnHome = { 530, 390, 180, 50 };
+		SDL_SetRenderDrawColor(ren, 115, 80, 60, 255);
+		SDL_RenderFillRect(ren, &btnHome);
+		draw_text(ren, g_fnt_md, "🏠 홈 으 로", 575, 402, text_white);
+	}
+	/* ================= ❌ STATE_GAMEOVER: 달성 실패 엔딩 창 화면 ================= */
+	else if (g->state == STATE_GAMEOVER) {
+		draw_game_background(ren);
+
+		SDL_Rect loseFrame = { 150, 100, SCREEN_W - 300, 420 };
+		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+		SDL_SetRenderDrawColor(ren, 44, 24, 24, 245); // 쓸쓸한 다크 블러드 와인 톤 장막
+		SDL_RenderFillRect(ren, &loseFrame);
+		SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);
+		SDL_RenderDrawRect(ren, &loseFrame);
+
+		draw_text(ren, g_fnt_lg, "😭 미션 실패 ! 다시 도전하라냥 😭", SCREEN_W / 2 - 170, 140, (SDL_Color) { 231, 76, 60, 255 });
+
+		char endBuf[256];
+		sprintf_s(endBuf, sizeof(endBuf), "최종 경영 정산 자산: 🪙 %d원 (목표액: 1,200,000원)", g->balance);
+		draw_text(ren, g_fnt_md, endBuf, 220, 220, text_white);
+		draw_text(ren, g_fnt_sm, "아쉽게도 제한 일수 15일 이내에 목표 자금 120만원을 달성하지 못했다냥.", 220, 270, text_white);
+		draw_text(ren, g_fnt_sm, "재고 낭비를 줄이고, 미식가의 특급 팁을 노려 고마진 메뉴를 더 연구해보라냥!", 220, 300, text_gold);
+
+		// 🎯 버튼 1: [게임 다시 하기] (X: 250 ~ 430, Y: 390 ~ 440)
+		SDL_Rect btnRetry = { 250, 390, 180, 50 };
+		SDL_SetRenderDrawColor(ren, 231, 76, 60, 255); // 붉은색 아크릴 버튼
+		SDL_RenderFillRect(ren, &btnRetry);
+		draw_text(ren, g_fnt_md, "🔄 다시 하기", 285, 402, text_white);
+
+		// 🎯 버튼 2: [홈으로 가기] (X: 530 ~ 710, Y: 390 ~ 440)
+		SDL_Rect btnHome = { 530, 390, 180, 50 };
+		SDL_SetRenderDrawColor(ren, 115, 80, 60, 255);
+		SDL_RenderFillRect(ren, &btnHome);
+		draw_text(ren, g_fnt_md, "🏠 홈 으 로", 575, 402, text_white);
 	}
 	SDL_RenderPresent(ren);
 }

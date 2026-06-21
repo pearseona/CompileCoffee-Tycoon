@@ -1,4 +1,4 @@
-// 공통 데이터 정의 묘듈
+// 공통 데이터 정의 모듈
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -11,7 +11,7 @@
 #include <time.h>
 
 /* 화면 & 프레임 세팅 */
-#define SCREEN_W		960
+#define SCREEN_W        960
 #define SCREEN_H        620
 #define FPS             60
 #define FRAME_DELAY     (1000 / FPS)
@@ -21,13 +21,21 @@
 #define MAX_BREW_SLOTS 3 // 업그레이드 가능한 제조 슬롯
 #define MAX_MENU 6 // 아메리카노, 라떼 등 메뉴 6종
 #define MAX_INGREDIENT 5 // 원두, 우유, 시럽, 크림, 얼음
-#define MAX_DAYS 20 // 총 플레이 타임라인 20일
-#define DAY_SEC 60 // 하루 영업 시간; 실시간 60초
+
+// 🎯 [기획 동기화]: 총 영업일수를 15일로 칼같이 수정 완료!
+#define MAX_DAYS 15 
+#define DAY_SEC 45 // 하루 영업 시간; 실시간 45초
+
 #define COMBO_TIMEOUT_MS 7000 // 콤보 유지 시간 제한 (7초)
 #define COMBO_COOL_DOWN_MS 5000 // 콤보 잠금 해제까지 걸리는 시간 (5초)
 #define LOG_MAX 6 // 인게임 HUD에 노출할 최근 로그 수
 #define MAX_LOG_LINES LOG_MAX
-#define GOAL_PROFIT 1000000 // 최종 승리 조건: 누적 순이익 100만원
+
+// 🎯 [기획 동기화]: 최종 우승 마일스톤 조건을 120만원으로 연동!
+#define GOAL_PROFIT 1200000 
+
+// 🎯 [에러 치료 핵심]: customer.c가 선언되지 않은 식별자로 헤매지 않도록 공통 상수로 완전 바인딩!
+#define SPAWN_INTERVAL_MS 7000
 
 /* 열거형(Enum) 정의*/
 
@@ -39,7 +47,7 @@ typedef enum {
     STATE_CLOSING,
     STATE_UPGRADE,
     STATE_GAMEOVER,
-    STATE_HIGHSCORE,
+    STATE_HIGHSCORE, // 🏆 대우승(성공) 화면용 상태 맵으로 바인딩 활용
     STATE_QUIT
 } GameState;
 
@@ -69,8 +77,7 @@ typedef enum {
     CUST_STUDENT, // 학생: 할인 적용
 
     CUST_TYPE_COUNT
-
-}CustType;
+} CustType;
 
 // 제조 슬롯의 실시간 상태
 typedef enum {
@@ -100,7 +107,7 @@ typedef struct {
     int patience_max;
     int active;
     int served; // 상태 정산: 1=만족 서빙 완료, -1=기다리다 이탈
-}Customer;
+} Customer;
 
 // 음료 제조 슬롯 구조체
 typedef struct {
@@ -109,7 +116,7 @@ typedef struct {
     int cust_id;
     int elapsed_ms; // 현재 제조 진행 시간
     int required_ms; // 메뉴별 완료 필요 시간
-}BrewSlot;
+} BrewSlot;
 
 // 업그레이드 아이템 구조체
 typedef struct {
@@ -161,7 +168,7 @@ typedef struct {
     // 업그레이드 트리
     Upgrade upg[6];
 
-    // 영속 저쟝용 데이터 배열
+    // 영속 저장용 데이터 배열
     DayRecord records[MAX_DAYS];
     int total_served, total_left;
 
@@ -180,17 +187,16 @@ typedef struct {
     // 상점 페이지 내비게이션 상태 변수
     int shop_page;
 
-    // 🎯 [추가] 인게임 실시간 백엔드 타이머 동결용 일시정지 제어 플래그 
+    // 인게임 실시간 백엔드 타이머 동결용 일시정지 제어 플래그 
     int is_paused;
 
-    // 🎯 [메모리 안정성 패치]: 80바이트에서 128바이트로 버퍼 공간 대폭 확장! (한글 로그 크래시 예방)
+    // 메모리 안정성 패치: 128바이트로 버퍼 공간 확장
     char log_lines[LOG_MAX][128];
     Uint32 log_ttl[LOG_MAX];
     int log_count;
 
     // 애니메이션 동기화용 틱
     Uint32 anim_tick;
-
 } Game;
 
 /* 전역 데이터 선언 */
@@ -219,7 +225,6 @@ void brew_cancel(Game* g, int slot_idx);
 
 // upgrade.c
 void upg_init(Game* g);
-// void upg_buy(Game[idx]);
 
 // save.c
 void save_record(Game* g);

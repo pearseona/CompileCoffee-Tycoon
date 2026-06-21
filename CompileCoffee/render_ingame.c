@@ -167,9 +167,7 @@ void draw_customer_queue(SDL_Renderer* ren, Game* g) {
 }
 
 void draw_barista_slots(SDL_Renderer* ren, Game* g) {
-	SDL_Rect counterLine = { 0, 370, SCREEN_W, 10 };
-	SDL_SetRenderDrawColor(ren, 115, 80, 60, 255);
-	SDL_RenderFillRect(ren, &counterLine);
+
 	SDL_Rect machineBg = { 50, 360, 250, 160 };
 	SDL_SetRenderDrawColor(ren, 127, 140, 141, 255);
 	SDL_RenderFillRect(ren, &machineBg);
@@ -179,7 +177,7 @@ void draw_barista_slots(SDL_Renderer* ren, Game* g) {
 	SDL_SetRenderDrawColor(ren, 44, 62, 80, 255);
 	SDL_RenderFillRect(ren, &machineHeader);
 	SDL_Color white = { 255, 255, 255, 255 };
-	draw_text(ren, g_fnt_sm, "☕ CUTE ESPRESSO MACHINE", 65, 365, white);
+	draw_text(ren, g_fnt_sm, "☕ COFFEE MACHINE", 65, 365, white);
 
 	for (int i = 0; i < g->slot_count; i++) {
 		int sx = 70 + i * 80; int sy = 400; SDL_Rect cupSpot = { sx, sy, 60, 80 };

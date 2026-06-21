@@ -228,6 +228,22 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
+				/* ================= 🎯 [추가 기획]: 우승 및 실패 엔딩창 마우스 버튼 연동 인터랙션 ================= */
+				else if (myGame.state == STATE_HIGHSCORE || myGame.state == STATE_GAMEOVER) {
+					// 1. [🔄 다시 하기] 버튼 조작 감지 (X: 250 ~ 430, Y: 390 ~ 440)
+					if (mx >= 250 && mx <= 430 && my >= 390 && my <= 440) {
+						game_init(&myGame);
+						game_start_day(&myGame); // 초기화 후 바로 1일차 영업 시작
+						myGame.is_paused = 0;
+						printf("[INPUT] 엔딩 창 -> 다시 하기 선택 완료! 장사 리스타트.\n");
+					}
+					// 2. [🏠 홈으로] 버튼 조작 감지 (X: 530 ~ 710, Y: 390 ~ 440)
+					else if (mx >= 530 && mx <= 710 && my >= 390 && my <= 440) {
+						game_init(&myGame);
+						myGame.state = STATE_MAIN; // 타이틀 메인 화면 원위치
+						printf("[INPUT] 엔딩 창 -> 타이틀 홈 화면 복귀.\n");
+					}
+				}
 			}
 			else if (ev.type == SDL_KEYDOWN) {
 				if (myGame.state == STATE_PLAYING && myGame.is_paused) {

@@ -8,7 +8,7 @@
 /* 대기열 및 타이머 초기화 */
 void cust_init(Game* g) {
 	for (int i = 0; i < MAX_QUEUE; i++) {
-		g->queue[i].active = 0; // 모든 대기열 슬롯 비우기
+		g->queue[i].active = 0;
 	}
 	g->spawn_timer_ms = 0;
 }
@@ -17,41 +17,43 @@ void cust_init(Game* g) {
 void cust_spawn(Game* g, Uint32 dt) {
 	g->spawn_timer_ms += dt;
 
-	/* [다형성 스폰 속도 변동 테이블 연동]: 피크타임 종류에 따라 스폰 주기 한계선 동적 축소 */
-	int current_spawn_interval = SPAWN_INTERVAL_MS; // 디폴트 7초
+	// 3일씩 지날 때마다 스폰 속도 1초씩 단축 가속 알고리즘
+	int speed_bonus_level = (g->day - 1) / 3;
+	int dynamic_base_interval = SPAWN_INTERVAL_MS - (speed_bonus_level * 1000);
+
+	if (dynamic_base_interval < 3000) {
+		dynamic_base_interval = 3000;
+	}
+
+	int current_spawn_interval = dynamic_base_interval;
 
 	if (g->event_ms > 0 && g->event_msg[0] != '\0') {
 		if (strcmp(g->event_msg, "RUSH_WORKER") == 0 || strcmp(g->event_msg, "RUSH_STUDENT") == 0) {
-			current_spawn_interval = 3200; // 🔥 러시 타임엔 3.2초마다 손님이 폭풍처럼 쏟아짐!
+			current_spawn_interval = 3200;
 		}
 	}
 
 	if (g->spawn_timer_ms >= current_spawn_interval) {
 		g->spawn_timer_ms = 0;
 
-		// 3개 손님 자리 중 빈 자리(active == 0)를 찾아 스폰
 		for (int i = 0; i < 3; i++) {
 			if (g->queue[i].active == 0) {
 				g->queue[i].active = 1;
 
-				/* 🎯 [확률 정화 시스템]: 러시 활성화 상태가 아니면 무조건 1/3 균등 분기 배정! */
 				CustType new_type;
 				if (g->event_ms > 0 && g->event_msg[0] != '\0' && strcmp(g->event_msg, "RUSH_WORKER") == 0) {
-					// 직장인 러시일 땐 80% 확률로 직장인 스폰 유도
 					new_type = (rand() % 100 < 80) ? CUST_WORKER : (CustType)(rand() % CUST_TYPE_COUNT);
 				}
 				else if (g->event_ms > 0 && g->event_msg[0] != '\0' && strcmp(g->event_msg, "RUSH_STUDENT") == 0) {
-					// 학생 러시일 땐 80% 확률로 학생 스폰 유도
 					new_type = (rand() % 100 < 80) ? CUST_STUDENT : (CustType)(rand() % CUST_TYPE_COUNT);
 				}
 				else {
-					// 💡 [수정]: 평상시에는 3가지 유형의 클래스가 정확히 33.3%씩 균등 무작위 스폰되도록 보증!
 					new_type = (CustType)(rand() % 3);
 				}
 
 				g->queue[i].type = new_type;
 
-				// 유형별 특징에 따른 메뉴 결정 및 인내심 세팅
+				// 🎯 [오타 교정 완료]: payout_max 접근 구문을 완전히 삭제 및 구조체 규격에 맞춤
 				if (new_type == CUST_WORKER) {
 					g->queue[i].patience_max = 8000;
 					g->queue[i].order = (rand() % 2); // MENU_AMERICANO 또는 MENU_LATTE
@@ -81,11 +83,10 @@ void cust_spawn(Game* g, Uint32 dt) {
 					log_push(g, "🎓 [🎓] 학 생 \"주머니 사정이 가볍다냥. 열공 모드 충전!\"");
 				}
 
-				// 인내심 초기화
 				g->queue[i].patience_ms = g->queue[i].patience_max;
 				g->queue[i].id = g->next_id++;
 				g->queue[i].served = 0;
-				break; // 한 번에 한 명만 스폰
+				break;
 			}
 		}
 	}
@@ -96,7 +97,6 @@ void game_serve_drink(Game* g, int customer_idx) {
 	if (customer_idx < 0 || customer_idx >= 3) return;
 
 	Customer* c = &g->queue[customer_idx];
-
 	int menu_price = g_menu[c->order].price;
 	int final_payout = menu_price;
 
