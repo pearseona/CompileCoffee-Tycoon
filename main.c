@@ -157,26 +157,57 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
-				// 🎯 2. 상점 정비 단계(STATE_UPGRADE) 핑크 카드 마우스 클릭 판정 
+				// 🎯 2. 상점 정비 단계(STATE_UPGRADE) 마우스 클릭 판정 통합
 				else if (myGame.state == STATE_UPGRADE) {
-					int card_y = 250;
-					int card_w = (SCREEN_W - 170) / 2; // 2열 가로폭 수식 동기화
-					int card_h = 145;
-					int right_x = 70 + card_w + 30;    // 우측 카드 시작점 마진 계산
-
-					// 🔨 좌측 핑크 카드 (제조 슬롯 확장) 영역 클릭 패널
-					if (mx >= 70 && mx <= 70 + card_w && my >= card_y && my <= card_y + card_h) {
-						printf("[INPUT] 마우스 핑크 카드 클릭: 슬롯 확장 결제 시도\n");
-						shop_buy_upgrade(&myGame, 0);
+					// 상점 상단 탭 가상 클릭 감지
+					if (my >= 130 && my <= 160) {
+						if (mx >= 70 && mx <= 250) {
+							myGame.shop_page = 0;
+							log_push(&myGame, "장비 및 재고 도매 상점 탭으로 이동했습니다.");
+						}
+						else if (mx >= 260 && mx <= 440) {
+							myGame.shop_page = 1;
+							log_push(&myGame, "레시피 신메뉴 연구소 탭으로 이동했습니다.");
+						}
 					}
-					// ⚡ 우측 핑크 카드 (고속 커피 머신 도입) 영역 클릭 패널
-					else if (mx >= right_x && mx <= right_x + card_w && my >= card_y && my <= card_y + card_h) {
-						printf("[INPUT] 마우스 핑크 카드 클릭: 머신 속도 강화 결제 시도\n");
-						shop_buy_upgrade(&myGame, 1);
+
+					int card_y = 235;
+					int card_w = 200;
+					int card_h = 175;
+					int gap = 8;
+
+					int x0 = 70;
+					int x1 = x0 + card_w + gap;
+					int x2 = x1 + card_w + gap;
+					int x3 = x2 + card_w + gap;
+
+					if (myGame.shop_page == 0) {
+						// PAGE 0 카드 클릭
+						if (mx >= x0 && mx <= x0 + card_w && my >= card_y && my <= card_y + card_h) {
+							shop_buy_upgrade(&myGame, 0);
+						}
+						else if (mx >= x1 && mx <= x1 + card_w && my >= card_y && my <= card_y + card_h) {
+							shop_buy_upgrade(&myGame, 1);
+						}
+						else if (mx >= x2 && mx <= x2 + card_w && my >= card_y && my <= card_y + card_h) {
+							shop_buy_upgrade(&myGame, 2);
+						}
+						else if (mx >= x3 && mx <= x3 + card_w && my >= card_y && my <= card_y + card_h) {
+							shop_buy_upgrade(&myGame, 3);
+						}
+					}
+					else {
+						// PAGE 1 카드 클릭 (신메뉴 해금)
+						if (mx >= x0 && mx <= x0 + card_w && my >= card_y && my <= card_y + card_h) {
+							shop_buy_upgrade(&myGame, 4); // 바닐라라떼 해금
+						}
+						else if (mx >= x1 && mx <= x1 + card_w && my >= card_y && my <= card_y + card_h) {
+							shop_buy_upgrade(&myGame, 5); // 콜드브루 해금
+						}
 					}
 				}
-			}
-			else if (ev.type == SDL_KEYDOWN) {
+			} // 🛠️ 오타 교정 완료: SDL_MOUSEBUTTONDOWN 블록이 완벽하게 독립 마감되는 지점!
+			else if (ev.type == SDL_KEYDOWN) { // 🛠️ 이제 마우스 클릭 감지와 대등한 분기(else if)로 안전 분리!
 				int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
 
 				switch (ev.key.keysym.sym) {
@@ -209,16 +240,21 @@ int main(int argc, char* argv[]) {
 					}
 					break;
 				case SDLK_8:
-					if (myGame.state == STATE_UPGRADE) shop_buy_upgrade(&myGame, 0);
+					if (myGame.state == STATE_UPGRADE && myGame.shop_page == 0) shop_buy_upgrade(&myGame, 0);
 					break;
 				case SDLK_9:
-					if (myGame.state == STATE_UPGRADE) shop_buy_upgrade(&myGame, 1);
+					if (myGame.state == STATE_UPGRADE && myGame.shop_page == 0) shop_buy_upgrade(&myGame, 1);
 					break;
-				case SDLK_RETURN:
+				case SDLK_LEFT:
 					if (myGame.state == STATE_UPGRADE) {
-						shop_next_day(&myGame);
-						myGame.sel_slot = 0;
-						myGame.sel_cust = -1;
+						myGame.shop_page = 0;
+						log_push(&myGame, "장비 및 재고 도매 상점 탭으로 이동했습니다.");
+					}
+					break;
+				case SDLK_RIGHT:
+					if (myGame.state == STATE_UPGRADE) {
+						myGame.shop_page = 1;
+						log_push(&myGame, "레시피 신메뉴 연구소 탭으로 이동했습니다.");
 					}
 					break;
 
@@ -301,6 +337,13 @@ int main(int argc, char* argv[]) {
 					break;
 				case SDLK_ESCAPE:
 					isRunning = false;
+					break;
+				case SDLK_RETURN:
+					if (myGame.state == STATE_UPGRADE) {
+						shop_next_day(&myGame);
+						myGame.sel_slot = 0;
+						myGame.sel_cust = -1;
+					}
 					break;
 				}
 			}

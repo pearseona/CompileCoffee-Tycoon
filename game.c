@@ -22,6 +22,7 @@ void game_init(Game* g) {
 	g->balance = 50000; // 초기 자본금 5만원
 	g->reputation = 50; // 초기 평판 
 	g->slot_count = 1; // 기본 제조 슬롯은 1개부터 시작
+	g->shop_page = 0;  // 🎯 [명시적 추가] 첫 상점 페이지 진입 인덱스 리셋
 
 	// 초기 재료 재고 
 	g->stock[ING_BEAN] = 15;
@@ -45,22 +46,11 @@ void game_init(Game* g) {
 	// 에스프레소 (원두 2)
 	g_menu[MENU_ESPRESSO] = (MenuInfo){ "에스프레소", 3500, 800, 1000, {2, 0, 0, 0, 0}, 1 };
 
-	// 상점 업그레이드 품목 초기화 
-	strcpy_s(g->upg[0].name, sizeof(g->upg[0].name), "제조 슬롯 확장");
-	strcpy_s(g->upg[0].desc, sizeof(g->upg[0].desc), "동시에 음료를 제조할 수 있는 슬롯을 추가합니다.");
-	g->upg[0].base_cost = 3000;
-	g->upg[0].level = 1;
-	g->upg[0].max_level = MAX_BREW_SLOTS;
-
-	strcpy_s(g->upg[1].name, sizeof(g->upg[1].name), "머신 속도 향상");
-	strcpy_s(g->upg[1].desc, sizeof(g->upg[1].desc), "음료 제조 속도가 15% 빨라집니다.");
-	g->upg[1].base_cost = 25000;
-	g->upg[1].level = 0;
-	g->upg[1].max_level = 3;
+	// 🎯 오타 수정 연동 완료 (upg_int -> upg_init)
+	upg_init(g);
 
 	// 손님, 이벤트 랜덤
 	srand((unsigned int)time(NULL));
-
 	log_push(g, "컴파일 커피에 오신 것을 환영합니다!");
 }
 
@@ -89,9 +79,40 @@ void game_start_day(Game* g) {
 	g->combo = 0;
 	g->combo_timer = 0;
 
+	// 🏍️ [버그 예방 안전장치] 매일 아침 긴급 오토바이 플래그 및 타이머를 완전 리셋
+	for (int i = 0; i < MAX_INGREDIENT; i++) {
+		g->stock_refill_ms[i] = 0;
+		g->is_refilling[i] = 0;
+	}
+
+	// 기존 일일 잔여 이벤트 메세지 캐시 소독
+	memset(g->event_msg, 0, sizeof(g->event_msg));
+	g->event_ms = 0;
+
 	log_push(g, "새로운 하루 영업을 개시합니다!");
 
-	/* 이벤트 NPC 확률 시스템 */
+	/* 🎯 [난수 가중치 제어]: 피크타임 및 돌발 이벤트 테마 주사위 굴리기 */
+	int day_roll = rand() % 100;
+
+	if (day_roll < 25) {
+		// 25% 확률로 직장인 대거 스폰 러시 발동!
+		strcpy_s(g->event_msg, sizeof(g->event_msg), "RUSH_WORKER");
+		g->event_ms = 35000; // 영업 시작 후 35초간 지옥의 피크타임 유지
+		log_push(g, "🔥 [피크타임] 점심 직장인 러시 발동! 35초간 손님이 쏟아집니다!");
+	}
+	else if (day_roll >= 25 && day_roll < 45) {
+		// 20% 확률로 박리다매 학생 단체 카공족 러시 발동!
+		strcpy_s(g->event_msg, sizeof(g->event_msg), "RUSH_STUDENT");
+		g->event_ms = 30000; // 30초간 학생 피크타임
+		log_push(g, "⚡ [피크타임] 근처 대학 종강일! 학생 손님들이 물밀기듯 찾아옵니다!");
+	}
+	else {
+		// 55% 확률로 평화롭고 한적한 일반 매장 운영
+		strcpy_s(g->event_msg, sizeof(g->event_msg), "NORMAL");
+		log_push(g, "☕ 매장이 비교적 한산합니다. 여유롭게 장사를 준비하세요.");
+	}
+
+	/* 이벤트 NPC 확률 시스템 (기존 레거시 유지) */
 	int npc_roll = rand() % 100;
 
 	if (npc_roll < 20) {
@@ -148,6 +169,18 @@ void game_update(Game* g, Uint32 dt) {
 		return;
 	}
 
+	/* 🎯 피크타임 타이머 실시간 감산 차감 가동 */
+	if (g->event_ms > 0) {
+		if (g->event_ms > (int)dt) {
+			g->event_ms -= dt;
+		}
+		else {
+			g->event_ms = 0;
+			log_push(g, "✨ 피크타임 러시가 무사히 종료되어 매장이 안정화되었습니다.");
+			strcpy_s(g->event_msg, sizeof(g->event_msg), "NORMAL");
+		}
+	}
+
 	/* 콤보 유지 및 락다운 타이머 */
 	if (g->combo > 0 && g->combo < 3) {
 		if (g->combo_timer > dt) {
@@ -179,6 +212,44 @@ void game_update(Game* g, Uint32 dt) {
 
 	// 음료 제조 진행 상태 업데이트 
 	brew_update(g, dt);
+
+	/* 🏍️ 재고 자동 긴급 충전 (대안 A) */
+	for (int i = 0; i < MAX_INGREDIENT; i++) {
+		if (i == ING_BEAN || i == ING_MILK) {
+			if (g->stock[i] <= 0) {
+				// 재고가 없는데 아직 쿨타임이 가동되지 않았다면 타이머 세팅
+				if (!g->is_refilling[i]) {
+					g->is_refilling[i] = 1;
+					g->stock_refill_ms[i] = 5000; // 5초 쿨타임 스타트
+					log_push(g, (i == ING_BEAN) ? "⚠️ 원두 고갈! 퀵 오토바이 배달 요청 중..." : "⚠️ 우유 고갈! 긴급 퀵 배달 요청 중...");
+				}
+
+				g->stock_refill_ms[i] -= dt;
+
+				// 5초가 다 지나면 정산 처리
+				if (g->stock_refill_ms[i] <= 0) {
+					int penalty_cost = (i == ING_BEAN) ? 400 : 250; // 긴급 패널티 단가
+
+					if (g->balance >= penalty_cost) {
+						g->balance -= penalty_cost;
+						g->stock[i] += 1; // 긴급 구호 물품 1개 수급 완료
+						g->is_refilling[i] = 0; // 플래그 클리어
+
+						char refill_msg[80];
+						sprintf_s(refill_msg, sizeof(refill_msg), "🏍️ 긴급 배달 완료: %s +1 (비용 -%d원)", (i == ING_BEAN) ? "원두" : "우유", penalty_cost);
+						log_push(g, refill_msg);
+					}
+					else {
+						g->stock_refill_ms[i] = 1000; // 소지금 부족 시 1초 지연 유예
+					}
+				}
+			}
+			else {
+				// 재고가 차 있다면 상태 초기화
+				g->is_refilling[i] = 0;
+			}
+		}
+	}
 }
 
 /* 🛠️ 실시간 알림 로그 푸시 (render.c 출력 규격에 100% 연동 동기화 패치) */
