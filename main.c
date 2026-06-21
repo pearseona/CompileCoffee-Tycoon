@@ -115,7 +115,6 @@ int main(int argc, char* argv[]) {
 				// 1. 인게임 영업 단계 플레이 클릭 처리
 				else if (myGame.state == STATE_PLAYING) {
 
-					// 🎯 [마우스 좌표 동기화 패치]: 작아진 버튼 크기에 맞춰 클릭 판정 범위 재조정!
 					// 정지 버튼 클릭 범위 감지 (X: 835 ~ 887, Y: 20 ~ 46)
 					if (mx >= 835 && mx <= 887 && my >= 20 && my <= 46) {
 						myGame.is_paused = !myGame.is_paused;
@@ -130,7 +129,7 @@ int main(int argc, char* argv[]) {
 						continue;
 					}
 
-					// 🎯 일시정지 상태일 때는 아래의 인게임 상호작용 클릭 처리를 완전 무시 스킵!
+					// 일시정지 상태일 때는 아래의 인게임 상호작용 클릭 처리를 완전 무시 스킵!
 					if (myGame.is_paused) {
 						log_push(&myGame, "⏸️ 일시정지 중에는 행동할 수 없다냥! 다시 눌러 해제하라냥.");
 						continue;
@@ -151,11 +150,13 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
-					// 대기 손님 구역 마우스 클릭 감지 및 서빙 연동
+					// 🎯 [대공사]: 대기 손님 구역 마우스 클릭 감지 Y축 범위 상향 동기화 패치!
 					int spots_x[3] = { 180, 440, 700 };
 					for (int i = 0; i < 3; i++) {
 						int cx = spots_x[i];
-						int cy = 210;
+						int cy = 135; // 💡 render.c와 동일하게 135 좌표 기준으로 싱크 매핑!
+
+						// 캐릭터 크기 135x160 범위 정밀 연산 체크
 						if (myGame.queue[i].active && mx >= cx && mx <= cx + 135 && my >= cy && my <= cy + 160) {
 							myGame.sel_cust = i;
 							printf("[INPUT] 마우스 클릭: 손님 %d 선택\n", i + 1);
@@ -246,7 +247,6 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			else if (ev.type == SDL_KEYDOWN) {
-				// 일시정지 중엔 키보드 단축키 액션도 철저히 동결 차단!
 				if (myGame.state == STATE_PLAYING && myGame.is_paused) {
 					continue;
 				}
@@ -378,7 +378,7 @@ int main(int argc, char* argv[]) {
 				case SDLK_BACKSPACE:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) brew_cancel(&myGame, myGame.sel_slot);
 					break;
-				case SDLK_p: // 단축키 P로도 일시정지가 제어되도록 히든 꿀팁 가이드 추가!
+				case SDLK_p:
 					if (myGame.state == STATE_PLAYING) {
 						myGame.is_paused = !myGame.is_paused;
 					}
@@ -401,7 +401,6 @@ int main(int argc, char* argv[]) {
 		Uint32 dt = currentTime - lastTime;
 
 		if (dt >= FRAME_DELAY) {
-			// 🎯 [핵심 동결 트리거]: 플레이 중이면서, '일시정지가 아닐 때만' 백엔드 시뮬레이션 타이머 업데이터 작동!
 			if (myGame.state == STATE_PLAYING && !myGame.is_paused) {
 				game_update(&myGame, dt);
 			}

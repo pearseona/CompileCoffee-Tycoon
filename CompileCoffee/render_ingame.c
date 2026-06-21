@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-#include "../common.h"     // 🎯 파일 꼬임 방지: 결합 주소 상대 기호 제거 연동 마스터링
+#include "../common.h"     
 #include "../render.h"
 #include "../customer.h"
 
@@ -47,85 +47,121 @@ void draw_procedural_cup(SDL_Renderer* ren, int x, int y, int w, int h, MenuID m
 	}
 }
 
+/* 🎯 [대공사 마감]: 상시 빈자리 카드 + 발밑 명찰 스위칭 + 컴팩트 메뉴 폰트 빌드 트랙 안착 */
 void draw_customer_queue(SDL_Renderer* ren, Game* g) {
 	int spots_x[3] = { 180, 440, 700 };
-	int spot_y = 210; int card_w = 135; int card_h = 160;
+	int cy = 165;
 
+	// 1. 손님이 있든 없든 빈자리 가이드 카드 상시 렌더링
 	for (int i = 0; i < 3; i++) {
-		int cx = spots_x[i];
-		SDL_Rect frameRect = { cx, spot_y, card_w, card_h };
+		SDL_Rect slotFrame = { spots_x[i], cy, 135, 160 };
 		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(ren, 255, 255, 255, 45);
-		SDL_RenderFillRect(ren, &frameRect);
-		SDL_SetRenderDrawColor(ren, 139, 106, 80, 120);
-		SDL_RenderDrawRect(ren, &frameRect);
+		SDL_SetRenderDrawColor(ren, 255, 255, 255, 25);
+		SDL_RenderFillRect(ren, &slotFrame);
+		SDL_SetRenderDrawColor(ren, 115, 80, 60, 60);
+		SDL_RenderDrawRect(ren, &slotFrame);
 	}
 
 	for (int i = 0; i < 3; i++) {
-		int cx = spots_x[i];
-		if (g->queue[i].active == 1) {
-			double patience_ratio = (double)g->queue[i].patience_ms / g->queue[i].patience_max;
-			if (patience_ratio < 0.0) patience_ratio = 0.0;
-			if (patience_ratio > 1.0) patience_ratio = 1.0;
+		if (g->queue[i].active) {
+			Customer* c = &g->queue[i];
 
-			if (g->sel_cust == i) {
-				SDL_Rect selOutline = { cx - 6, spot_y - 6, card_w + 12, card_h + 12 };
-				Uint32 tick = SDL_GetTicks();
-				if ((tick / 250) % 2 == 0) {
-					SDL_SetRenderDrawColor(ren, 253, 203, 110, 255);
-					SDL_RenderDrawRect(ren, &selOutline);
-				}
+			// 2. 손님 캐릭터 스프라이트 본체 드로잉
+			SDL_Rect dst = { spots_x[i], cy, 135, 160 };
+			if (g_tex_customers[c->type]) {
+				SDL_RenderCopy(ren, g_tex_customers[c->type], NULL, &dst);
 			}
-			SDL_Rect customerCard = { cx, spot_y, card_w, card_h };
-			int c_type = (int)g->queue[i].type;
-			if (c_type >= 0 && c_type < 3 && g_tex_customers[c_type]) {
-				SDL_RenderCopy(ren, g_tex_customers[c_type], NULL, &customerCard);
+
+			// 3. 📝 성향 명찰 카드 발밑(cy + 170) 셋업
+			SDL_Rect textCard = { spots_x[i] + 10, cy + 170, 115, 24 };
+			SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(ren, 20, 15, 12, 230);
+			SDL_RenderFillRect(ren, &textCard);
+			SDL_SetRenderDrawColor(ren, 253, 203, 110, 150);
+			SDL_RenderDrawRect(ren, &textCard);
+
+			char specBuf[64];
+			SDL_Color cText_color = { 255, 255, 255, 255 };
+			if (c->type == CUST_WORKER) {
+				sprintf_s(specBuf, sizeof(specBuf), "[🚨급함] 직장인");
+				cText_color = (SDL_Color){ 255, 120, 120, 255 };
 			}
-			int bubble_w = 90; int bubble_h = 70; int bx = cx + 70; int by = spot_y - 80;
+			else if (c->type == CUST_FOODIE) {
+				sprintf_s(specBuf, sizeof(specBuf), "[👑팁!] 미식가");
+				cText_color = (SDL_Color){ 253, 203, 110, 255 };
+			}
+			else {
+				sprintf_s(specBuf, sizeof(specBuf), "[🎓할인] 학생");
+				cText_color = (SDL_Color){ 120, 230, 255, 255 };
+			}
+			draw_text(ren, g_fnt_sm, specBuf, spots_x[i] + 18, cy + 174, cText_color);
+
+			// 4. 원래 큼직하고 이쁜 90x70 화이트 그래픽 말풍선 복원
+			int bubble_w = 90; int bubble_h = 70;
+			int bx = spots_x[i] + 70; int by = cy - 65;
 			SDL_Rect bubbleRect = { bx, by, bubble_w, bubble_h };
-			SDL_SetRenderDrawColor(ren, 245, 246, 250, 255);
+			SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(ren, 245, 246, 250, 245);
 			SDL_RenderFillRect(ren, &bubbleRect);
 			SDL_SetRenderDrawColor(ren, 113, 128, 147, 255);
 			SDL_RenderDrawRect(ren, &bubbleRect);
 
-			// 🎯 [시각 고도화]: 머리 위의 탭 인터랙션에 성향 타이틀 표기
-			char tagStr[32] = "";
-			SDL_Color tagColor = { 47, 53, 66, 255 };
+			// 세로형 실시간 리퀴드 인내심 바
+			double patience_ratio = (double)c->patience_ms / c->patience_max;
+			if (patience_ratio < 0.0) patience_ratio = 0.0;
+			if (patience_ratio > 1.0) patience_ratio = 1.0;
 
-			if (c_type == CUST_WORKER) {
-				sprintf_s(tagStr, sizeof(tagStr), "[급함] 직장인");
-				tagColor = (SDL_Color){ 231, 76, 60, 255 }; // 직장인은 긴장감 도는 레드
-			}
-			else if (c_type == CUST_FOODIE) {
-				sprintf_s(tagStr, sizeof(tagStr), "★VIP★ 미식가");
-				tagColor = (SDL_Color){ 243, 156, 18, 255 }; // 미식가는 프리미엄 골드
-			}
-			else if (c_type == CUST_STUDENT) {
-				sprintf_s(tagStr, sizeof(tagStr), "[할인] 학생");
-				tagColor = (SDL_Color){ 46, 204, 113, 255 }; // 학생은 청량한 그린
-			}
-
-			// 태그를 말풍선 위 좌표에 드로우
-			draw_text(ren, g_fnt_sm, tagStr, cx + 5, spot_y - 97, tagColor);
-
-			int gauge_x = bx + 4; int gauge_y = by + 5; int gauge_w = 7; int gauge_max_h = bubble_h - 10;
+			int gauge_x = bx + 5; int gauge_y = by + 6; int gauge_w = 7; int gauge_max_h = bubble_h - 12;
 			int gauge_curr_h = (int)(gauge_max_h * patience_ratio);
 			SDL_Rect gaugeBg = { gauge_x, gauge_y, gauge_w, gauge_max_h };
 			SDL_SetRenderDrawColor(ren, 87, 101, 116, 255);
 			SDL_RenderFillRect(ren, &gaugeBg);
+
 			SDL_Rect gaugeFill = { gauge_x, gauge_y + (gauge_max_h - gauge_curr_h), gauge_w, gauge_curr_h };
 			if (patience_ratio > 0.5) SDL_SetRenderDrawColor(ren, 46, 204, 113, 255);
 			else if (patience_ratio > 0.25) SDL_SetRenderDrawColor(ren, 241, 196, 15, 255);
 			else SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);
 			SDL_RenderFillRect(ren, &gaugeFill);
 
-			SDL_Rect iconRect = { bx + 22, by + 12, 45, 45 };
-			MenuID order_menu = g->queue[i].order;
-			if (g_tex_menus[order_menu]) SDL_RenderCopy(ren, g_tex_menus[order_menu], NULL, &iconRect);
-			else draw_procedural_cup(ren, bx + 22, by + 12, 45, 45, order_menu, true);
+			// 5. 주문 음료 텍스처 아이콘 출력
+			SDL_Rect iconRect = { bx + 22, by + 10, 45, 45 };
+			MenuID order_menu = c->order;
+			if (g_tex_menus[order_menu]) {
+				SDL_RenderCopy(ren, g_tex_menus[order_menu], NULL, &iconRect);
+			}
+			else {
+				draw_procedural_cup(ren, bx + 22, by + 10, 45, 45, order_menu, true);
+			}
 
+			// 말풍선 내부 하단 텍스트 마감
 			SDL_Color nameColor = { 47, 53, 66, 255 };
-			draw_text(ren, g_fnt_sm, g_menu[order_menu].name, bx + 16, by + bubble_h - 13, nameColor);
+			draw_text(ren, g_fnt_sm, g_menu[order_menu].name, bx + 16, by + bubble_h - 14, nameColor);
+
+			// 6. 명찰 아래쪽 여백(cy + 202)으로 격리 이격된 가로형 타임아웃 인내심 바
+			int bar_w = 120; int bar_h = 6;
+			int bx_bar = spots_x[i] + 7; int by_bar = cy + 202;
+			SDL_Rect barBg = { bx_bar, by_bar, bar_w, bar_h };
+			SDL_SetRenderDrawColor(ren, 50, 40, 35, 255);
+			SDL_RenderFillRect(ren, &barBg);
+
+			float ratio = (float)c->patience_ms / (float)c->patience_max;
+			if (ratio < 0) ratio = 0;
+			int curr_w = (int)(bar_w * ratio);
+			SDL_Rect barFill = { bx_bar, by_bar, curr_w, bar_h };
+
+			if (ratio > 0.5f) SDL_SetRenderDrawColor(ren, 46, 204, 113, 255);
+			else if (ratio > 0.2f) SDL_SetRenderDrawColor(ren, 241, 196, 15, 255);
+			else SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);
+			SDL_RenderFillRect(ren, &barFill);
+
+			// 7. 선택 시 두꺼운 선명한 빨간색(3px) 테두리 그리기
+			if (g->sel_cust == i) {
+				SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);
+				for (int t = 0; t < 3; t++) {
+					SDL_Rect thickOutline = { dst.x - t, dst.y - t, dst.w + (t * 2), dst.h + (t * 2) };
+					SDL_RenderDrawRect(ren, &thickOutline);
+				}
+			}
 		}
 	}
 }
@@ -154,7 +190,7 @@ void draw_barista_slots(SDL_Renderer* ren, Game* g) {
 		}
 		SDL_Rect nozzle = { sx + 22, sy - 12, 16, 12 };
 		SDL_SetRenderDrawColor(ren, 52, 73, 94, 255);
-		SDL_RenderFillRect(ren, &nozzle);
+		SDL_RenderFillRect(ren, &cupSpot);
 
 		SlotState state = g->slots[i].state;
 		if (state == SLOT_EMPTY) {
@@ -208,15 +244,35 @@ void draw_barista_slots(SDL_Renderer* ren, Game* g) {
 		draw_text(ren, g_fnt_sm, "제조할 음료를 선택하세요 (키보드 Q,W,E,R,T,Y)", mx_start + 15, my_start + 5, goldText);
 
 		char* hotkeys[6] = { "Q", "W", "E", "R", "T", "Y" };
+		const char* full_menu_names[6] = { "아메리카노", "카페라떼", "바닐라라떼", "콜드브루", "카라멜마끼아또", "에스프레소" };
+
 		for (int i = 0; i < 6; i++) {
 			int bx = mx_start + 10 + i * 56; int by = my_start + 26; SDL_Rect btnRect = { bx, by, 45, 45 };
+
+			// 🎯 [완전 수선]: g->menus 데이터를 전역 데이터 셋 구조인 g_menu로 매핑 교정 완료!
 			if (g_menu[i].unlocked) {
 				SDL_SetRenderDrawColor(ren, 115, 96, 83, 255);
 				SDL_RenderFillRect(ren, &btnRect);
 				if (g_tex_menus[i]) SDL_RenderCopy(ren, g_tex_menus[i], NULL, &btnRect);
 				else draw_procedural_cup(ren, bx, by, 45, 45, (MenuID)i, true);
-				SDL_Color wt = { 255, 255, 255, 255 };
-				draw_text(ren, g_fnt_sm, hotkeys[i], bx + 18, by + 12, wt);
+
+				// 오직 단축키 알파벳 좌측 상단 한 글자만 투명하게 포인트 연출
+				SDL_Color wt = { 255, 255, 255, 140 };
+				draw_text(ren, g_fnt_sm, hotkeys[i], bx + 4, by + 2, wt);
+
+				// 긴 한글 메뉴 이름이 삐져나가지 않도록 기존 md폰트에서 sm폰트("g_fnt_sm")로 완전 축소 교체 완료!
+				SDL_Color txtGuideColor = { 245, 246, 250, 255 };
+
+				// 13px 폰트 사이즈 변동에 맞게 정중앙 오프셋 좌우 마진 재정렬
+				int text_x_pos = bx + 2;
+				if (i == 0) text_x_pos = bx - 10;
+				else if (i == 1) text_x_pos = bx - 5;
+				else if (i == 2) text_x_pos = bx - 10;
+				else if (i == 3) text_x_pos = bx - 5;
+				else if (i == 4) text_x_pos = bx - 18;
+				else if (i == 5) text_x_pos = bx - 5;
+
+				draw_text(ren, g_fnt_sm, full_menu_names[i], text_x_pos, by + 49, txtGuideColor);
 			}
 			else {
 				SDL_SetRenderDrawColor(ren, 50, 40, 35, 255);
