@@ -63,7 +63,7 @@ void game_start_day(Game* g) {
 
 	g->day_revenue = 0;
 	g->day_expenditure = 0;
-	g->spawn_timer_ms = 2000; // 영업 시작 2초 뒤 첫 손님 리액션
+	g->spawn_timer_ms = 5000; // 영업 시작 2초 뒤 첫 손님 리액션
 
 	// 원형 큐 대기열 초기화
 	g->q_head = 0;
@@ -153,7 +153,7 @@ void game_close_day(Game* g) {
 			g->combo
 		};
 	}
-	log_push(g, "90초 영업 마감! 상점 및 정산 화면으로 자동 이동했습니다.");
+	log_push(g, "60초 영업 마감! 상점 및 정산 화면으로 자동 이동했습니다.");
 }
 
 /* 실시간 시간 경과 처리 */
