@@ -47,9 +47,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\brew.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="..\common.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -57,9 +54,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\save.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="..\upgrade.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\game.h">

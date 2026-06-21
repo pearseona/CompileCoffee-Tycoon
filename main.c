@@ -14,14 +14,17 @@
 #include "render.h"
 
 int main(int argc, char* argv[]) {
-	// 🎯 [난수 버그 완치]: 프로그램 구동 직후 시간 기반 시드를 초기화하여 무한 학생 스폰 억까를 전격 해결!
+
+	// 난수 발생 초기화
 	srand((unsigned int)time(NULL));
 
+	// SDL 서브시스템 초기화
 	if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) < 0) {
 		printf("SDL 초기화 실패: %s\n", SDL_GetError());
 		return -1;
 	}
 
+	// 이미지 및 폰트 라이브러리 초기화
 	if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
 		printf("[WARN] SDL_image PNG 초기화 실패: %s\n", IMG_GetError());
 	}
@@ -33,6 +36,7 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
+	// 윈도우
 	SDL_Window* win = SDL_CreateWindow(
 		"[Compile Coffee - Cute & Cozy Cafe]",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -52,6 +56,7 @@ int main(int argc, char* argv[]) {
 		ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
 	}
 
+	// 게임 리소스(이미지/폰트) 로드
 	if (!render_init_fonts()) {
 		SDL_DestroyRenderer(ren);
 		SDL_DestroyWindow(win);
@@ -65,6 +70,7 @@ int main(int argc, char* argv[]) {
 		printf("[WARN] 이미지 로드 중 일부 실패가 발생했으나 기본 그래픽으로 진행합니다.\n");
 	}
 
+	// 게임 로직 초기 상태 세팅
 	Game myGame;
 	game_init(&myGame);
 
@@ -78,19 +84,25 @@ int main(int argc, char* argv[]) {
 
 	SDL_Delay(500);
 
+	// 메인 게임 루프 시작
 	Uint32 lastTime = SDL_GetTicks();
 	bool isRunning = true;
 	SDL_Event ev;
 
 	while (isRunning) {
+
+		// 이벤트 폴링 (마우스 클릭, 키보드 입력 등 감지)
 		while (SDL_PollEvent(&ev)) {
 			if (ev.type == SDL_QUIT) {
 				isRunning = false;
 			}
+
+			// 마우스 입력 이벤트 처리
 			else if (ev.type == SDL_MOUSEBUTTONDOWN) {
 				int mx = ev.button.x;
 				int my = ev.button.y;
 
+				// 메인 화면 UI
 				if (myGame.state == STATE_MAIN) {
 					if (mx >= 380 && mx <= 580 && my >= 340 && my <= 395) {
 						game_start_day(&myGame);
@@ -102,11 +114,15 @@ int main(int argc, char* argv[]) {
 						printf("[INPUT] 타이틀 버튼 클릭 -> 게임 설명 연동 전환\n");
 					}
 				}
+				// 튜토리얼 화면에서 클릭 시 메인으로 복귀
 				else if (myGame.state == STATE_TUTORIAL) {
 					myGame.state = STATE_MAIN;
 					printf("[INPUT] 설명 가이드 창 종료 -> 메인 화면 복귀\n");
 				}
+				// 게임 플레이 상태
 				else if (myGame.state == STATE_PLAYING) {
+
+					// 일시정지 및 홈으로 이동
 					if (mx >= 835 && mx <= 887 && my >= 20 && my <= 46) {
 						myGame.is_paused = !myGame.is_paused;
 						log_push(&myGame, myGame.is_paused ? "⏸️ 게임을 일시 정지했습니다." : "▶ 장사를 재개합니다.");
@@ -124,6 +140,7 @@ int main(int argc, char* argv[]) {
 						continue;
 					}
 
+					// 제조 슬롯 선택 
 					bool clicked_slot = false;
 
 					for (int i = 0; i < myGame.slot_count; i++) {
@@ -138,6 +155,7 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
+					// 손님 선택 및 서빙
 					int spots_x[3] = { 180, 440, 700 };
 					for (int i = 0; i < 3; i++) {
 						int cx = spots_x[i];
@@ -157,6 +175,7 @@ int main(int argc, char* argv[]) {
 						}
 					}
 
+					// 메뉴 선택 및 제조 시작
 					if (!clicked_slot && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.slots[myGame.sel_slot].state == SLOT_EMPTY) {
 							for (int i = 0; i < 6; i++) {
@@ -184,6 +203,7 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
+				// 상점 화면
 				else if (myGame.state == STATE_UPGRADE) {
 					if (my >= 130 && my <= 160) {
 						if (mx >= 70 && mx <= 250) {
@@ -228,23 +248,26 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
-				/* ================= 🎯 [추가 기획]: 우승 및 실패 엔딩창 마우스 버튼 연동 인터랙션 ================= */
+				// 엔딩 화면
 				else if (myGame.state == STATE_HIGHSCORE || myGame.state == STATE_GAMEOVER) {
-					// 1. [🔄 다시 하기] 버튼 조작 감지 (X: 250 ~ 430, Y: 390 ~ 440)
+
+					// 다시 하기
 					if (mx >= 250 && mx <= 430 && my >= 390 && my <= 440) {
 						game_init(&myGame);
-						game_start_day(&myGame); // 초기화 후 바로 1일차 영업 시작
+						game_start_day(&myGame); 
 						myGame.is_paused = 0;
 						printf("[INPUT] 엔딩 창 -> 다시 하기 선택 완료! 장사 리스타트.\n");
 					}
-					// 2. [🏠 홈으로] 버튼 조작 감지 (X: 530 ~ 710, Y: 390 ~ 440)
+					// 홈으로
 					else if (mx >= 530 && mx <= 710 && my >= 390 && my <= 440) {
 						game_init(&myGame);
-						myGame.state = STATE_MAIN; // 타이틀 메인 화면 원위치
+						myGame.state = STATE_MAIN;
 						printf("[INPUT] 엔딩 창 -> 타이틀 홈 화면 복귀.\n");
 					}
 				}
 			}
+
+			// 키보드 입력 이벤트
 			else if (ev.type == SDL_KEYDOWN) {
 				if (myGame.state == STATE_PLAYING && myGame.is_paused) {
 					continue;
@@ -253,12 +276,16 @@ int main(int argc, char* argv[]) {
 				int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
 
 				switch (ev.key.keysym.sym) {
+
+				// 슬롯 1
 				case SDLK_1:
 					if (myGame.state == STATE_PLAYING) {
 						myGame.sel_slot = 0;
 						log_push(&myGame, "제조 슬롯 1을 선택했습니다.");
 					}
 					break;
+
+				// 슬롯 2
 				case SDLK_2:
 					if (myGame.state == STATE_PLAYING) {
 						if (myGame.slot_count >= 2) {
@@ -270,6 +297,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					break;
+
+				// 슬롯 3
 				case SDLK_3:
 					if (myGame.state == STATE_PLAYING) {
 						if (myGame.slot_count >= 3) {
@@ -300,6 +329,7 @@ int main(int argc, char* argv[]) {
 					}
 					break;
 
+				// 아메리카노
 				case SDLK_q:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_AMERICANO].unlocked) {
@@ -310,6 +340,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					break;
+
+				// 카페라떼
 				case SDLK_w:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_LATTE].unlocked) {
@@ -320,6 +352,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					break;
+
+				// 바닐라라떼
 				case SDLK_e:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_VANILLA_LATTE].unlocked) {
@@ -330,6 +364,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					break;
+
+				// 콜드브루
 				case SDLK_r:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_COLD_BREW].unlocked) {
@@ -340,6 +376,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					break;
+
+				// 카라멜마끼아또
 				case SDLK_t:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_CARAMEL_MAC].unlocked) {
@@ -350,6 +388,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					break;
+
+				// 에스프레소
 				case SDLK_y:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0 && myGame.sel_slot < myGame.slot_count) {
 						if (myGame.queue[target_qi].active && g_menu[MENU_ESPRESSO].unlocked) {
@@ -409,6 +449,7 @@ int main(int argc, char* argv[]) {
 		SDL_Delay(1);
 	}
 
+	// 종료 자원 정리 및 SDL 해제
 	render_close_fonts();
 	render_close_images();
 	SDL_DestroyRenderer(ren);

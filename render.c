@@ -4,17 +4,17 @@
 #include <string.h>
 #include "render.h"
 
+// 전역 폰트 
 TTF_Font* g_fnt_lg = NULL;
 TTF_Font* g_fnt_md = NULL;
 TTF_Font* g_fnt_sm = NULL;
 
+// 그래픽 텍스처
 SDL_Texture* g_tex_customers[3] = { NULL, NULL, NULL };
 SDL_Texture* g_tex_barista = NULL;
 SDL_Texture* g_tex_station = NULL;
 SDL_Texture* g_tex_background = NULL;
 SDL_Texture* g_tex_menus[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-
-// 🛠️ 상점 전용 그래픽 텍스처 포인터 바인딩
 SDL_Texture* g_tex_shop_slot = NULL;
 SDL_Texture* g_tex_shop_machine = NULL;
 
@@ -22,6 +22,7 @@ extern void draw_game_background(SDL_Renderer* ren);
 extern void draw_customer_queue(SDL_Renderer* ren, Game* g);
 extern void draw_barista_slots(SDL_Renderer* ren, Game* g);
 
+/* 전역 폰트 자원 초기화 */
 bool render_init_fonts() {
 	g_fnt_lg = TTF_OpenFont("font.ttf", 26);
 	g_fnt_md = TTF_OpenFont("font.ttf", 18);
@@ -30,6 +31,7 @@ bool render_init_fonts() {
 	return true;
 }
 
+/* 폰트 자원 해제 */
 void render_close_fonts() {
 	if (g_fnt_lg) TTF_CloseFont(g_fnt_lg);
 	if (g_fnt_md) TTF_CloseFont(g_fnt_md);
@@ -55,6 +57,7 @@ SDL_Texture* load_texture(SDL_Renderer* ren, const char* baseName) {
 	return tex;
 }
 
+/* 게임에 사용되는 이미지 로드 */
 bool render_init_images(SDL_Renderer* ren) {
 	if (!ren) return false;
 	g_tex_background = load_texture(ren, "background");
@@ -105,6 +108,7 @@ void draw_text(SDL_Renderer* ren, TTF_Font* font, const char* text, int x, int y
 	SDL_FreeSurface(surf);
 }
 
+/* 현재 게임 상태에 따른 실시간 스크린 총괄 */
 void render_frame(SDL_Renderer* ren, Game* g) {
 	if (!ren || !g) return;
 	SDL_SetRenderDrawColor(ren, 42, 33, 28, 255);
@@ -114,7 +118,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 	SDL_Color text_white = { 255, 255, 255, 255 };
 	SDL_Color text_coffee_brown = { 115, 80, 60, 255 };
 
-	/* ================= STATE_MAIN: 타이틀 메인 ================= */
+	/* STATE_MAIN: 메인 */
 	if (g->state == STATE_MAIN) {
 		draw_game_background(ren);
 
@@ -124,6 +128,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_RenderFillRect(ren, &titleShadow);
 		draw_text(ren, g_fnt_lg, "☕ 컴파일 커피 (Compile Coffee) ☕", SCREEN_W / 2 - 215, 175, text_gold);
 
+		// 게임 시작
 		SDL_Rect btnStart = { 380, 340, 200, 55 };
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderFillRect(ren, &btnStart);
@@ -131,6 +136,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_RenderDrawRect(ren, &btnStart);
 		draw_text(ren, g_fnt_md, "▶ 게임 시작", 432, 356, text_white);
 
+		// 게임 설명
 		SDL_Rect btnTutorial = { 380, 420, 200, 55 };
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderFillRect(ren, &btnTutorial);
@@ -138,7 +144,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_RenderDrawRect(ren, &btnTutorial);
 		draw_text(ren, g_fnt_md, "📝 게임 설명", 432, 436, text_white);
 	}
-	/* ================= STATE_TUTORIAL: 게임 설명 (15일로 스케일 변경) ================= */
+	/* STATE_TUTORIAL: 게임 설명 */
 	else if (g->state == STATE_TUTORIAL) {
 		draw_game_background(ren);
 
@@ -149,29 +155,34 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderDrawRect(ren, &tutorialPanel);
 
-		draw_text(ren, g_fnt_lg, "☕ 컴파일 커피 - 완벽 경영 도움말 ☕", 120, 100, text_gold);
+		draw_text(ren, g_fnt_lg, "☕ 컴파일 커피 - 게임 도움말 ☕", 120, 100, text_gold);
 
 		SDL_Color txtGray = { 220, 221, 230, 255 };
+
+		// 조작 가이드 안내
 		draw_text(ren, g_fnt_md, "1. 바리스타 조작 가이드", 120, 160, text_gold);
 		draw_text(ren, g_fnt_sm, "- 마우스로 [에스프레소 머신 슬롯]을 선택 후, 메뉴 아이콘이나 단축키로 음료를 제조합니다.", 140, 190, txtGray);
 		draw_text(ren, g_fnt_sm, "- 단축키 연동: Q(아메리카노), W(라떼), E(바닐라라떼), R(콜드브루), T(카라멜), Y(에스프레소)", 140, 215, txtGray);
 		draw_text(ren, g_fnt_sm, "- 음료 제조가 [★완료★]되면, 해당 슬롯 지정 후 손님을 마우스로 클릭해 최종 서빙합니다.", 140, 240, txtGray);
 
+		// 손님 정보
 		draw_text(ren, g_fnt_md, "2. 손님 맞춤형 성향 공략 및 피크타임", 120, 280, text_gold);
 		draw_text(ren, g_fnt_sm, "- [직장인]: 성격이 급해 대기 게이지가 2배 광속 차감됩니다! 최우선 순위로 대접하세요.", 140, 310, txtGray);
 		draw_text(ren, g_fnt_sm, "- [미식가]: 까다롭지만 서빙 성공 시 기본 가격의 1.5배 보너스 특급 팁을 투척합니다.", 140, 335, txtGray);
-		draw_text(ren, g_fnt_sm, "- [돌발 러시]: 매일 아침 일정 확률로 점심 직장인 대규모 피크타임(스폰 3.2초 단축)이 발동합니다.", 140, 360, txtGray);
+		draw_text(ren, g_fnt_sm, "- [돌발 러시]: 매일 아침 일정 확률로 점심 직장인 대규모 피크타임(3.2초 단축)이 발동합니다.", 140, 360, txtGray);
 
-		draw_text(ren, g_fnt_md, "3. 최종 승리 마일스톤 조건 (15일 단축 패치)", 120, 400, text_gold);
-		draw_text(ren, g_fnt_sm, "- 하루 영업 시간은 단 60초! 총 15일 동안 매장을 알차게 경영해야 마무리가 진행됩니다.", 140, 430, txtGray);
-		draw_text(ren, g_fnt_sm, "- 재고 부족 시 긴급 충전 단가 페널티가 발생하니, 상점에서 재료들을 미리 도매 구매하세요.", 140, 455, txtGray);
-		draw_text(ren, g_fnt_sm, "★ 최종 목표: 제한 일수 15일 내에 매장 순이익 🪙 1,000,000원 이상을 달성하면 대승리!", 140, 485, text_gold);
+		// 승리 조건
+		draw_text(ren, g_fnt_md, "3. 최종 승리 조건", 120, 400, text_gold);
+		draw_text(ren, g_fnt_sm, "- 하루 영업 시간은 단 45초! 총 15일 동안 매장을 알차게 경영해야 마무리가 진행됩니다.", 140, 430, txtGray);
+		draw_text(ren, g_fnt_sm, "- 재고 부족 시 긴급 충전 단가 페널티가 발생하니, 상점에서 재료들을 미리 구매하세요.", 140, 455, txtGray);
+		draw_text(ren, g_fnt_sm, "★ 최종 목표: 제한 일수 15일 내에 매장 순이익 🪙 1,200,000원 이상을 달성하면 대승리!", 140, 485, text_gold);
 
 		SDL_Color returnTxtColor = { 180, 180, 180, 255 };
 		draw_text(ren, g_fnt_md, "[ 화면 아무 곳이나 마우스로 클릭하면 메인 화면으로 돌아갑니다. ]", SCREEN_W / 2 - 240, 525, returnTxtColor);
 	}
-	/* ================= STATE_PLAYING / STATE_CLOSING: 인게임 영업 ================= */
+	/* STATE_PLAYING / STATE_CLOSING: 인게임 영업 */
 	else if (g->state == STATE_PLAYING || g->state == STATE_CLOSING) {
+
 		draw_game_background(ren);
 		SDL_Rect headerBg = { 10, 10, SCREEN_W - 20, 50 };
 		SDL_SetRenderDrawColor(ren, 26, 18, 14, 220);
@@ -179,13 +190,16 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_SetRenderDrawColor(ren, 90, 70, 58, 255);
 		SDL_RenderDrawRect(ren, &headerBg);
 
+		// 평판
 		char uiBuf[256];
 		sprintf_s(uiBuf, sizeof(uiBuf), "🪙 %d원  [평판: %d/100]", g->balance, g->reputation);
 		draw_text(ren, g_fnt_md, uiBuf, 25, 24, text_gold);
 
+		// 현재 진행 일수
 		sprintf_s(uiBuf, sizeof(uiBuf), "DAY %02d", g->day);
 		draw_text(ren, g_fnt_md, uiBuf, 350, 24, text_white);
 
+		// 영업시간 타이머 진행 바
 		int bar_x = 420; int bar_y = 30; int bar_max_w = 310; int bar_h = 12;
 		SDL_Rect timeBarBg = { bar_x, bar_y, bar_max_w, bar_h };
 		SDL_SetRenderDrawColor(ren, 64, 48, 38, 255);
@@ -208,6 +222,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		sprintf_s(uiBuf, sizeof(uiBuf), "%02d:%02d", display_m, display_s);
 		draw_text(ren, g_fnt_md, uiBuf, 750, 24, text_white);
 
+		// 정지 / 재개 버튼
 		SDL_Rect rPauseBtn = { 835, 20, 52, 26 };
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderFillRect(ren, &rPauseBtn);
@@ -215,6 +230,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_RenderDrawRect(ren, &rPauseBtn);
 		draw_text(ren, g_fnt_sm, g->is_paused ? "재개" : "정지", 846, 24, text_white);
 
+		// 홈 버튼
 		SDL_Rect rHomeBtn = { 892, 20, 32, 26 };
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderFillRect(ren, &rHomeBtn);
@@ -235,6 +251,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_Color tip_color = { 180, 180, 180, 255 };
 		draw_text(ren, g_fnt_sm, "[조작팁] 마우스 클릭 슬롯 지정, 메뉴 선택 제조, 고객 클릭 서빙! [Enter] 상점 전환", 25, 550, tip_color);
 
+		// 로그 출력
 		if (g->log_count > 0) {
 			draw_text(ren, g_fnt_md, g->log_lines[(g->log_count - 1) % MAX_LOG_LINES], 25, 577, log_color);
 		}
@@ -242,6 +259,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			draw_text(ren, g_fnt_md, "어서오세요! 컴파일 커피가 정상 영업을 개시했습니다.", 25, 577, log_color);
 		}
 
+		// 일시정지 활성화 시
 		if (g->is_paused) {
 			SDL_Rect pauseMask = { 0, 0, SCREEN_W, SCREEN_H };
 			SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
@@ -258,7 +276,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			draw_text(ren, g_fnt_sm, "[우측 상단의 ▶ 재개 버튼이나 단축키 'P'를 누르면 다시 흐릅니다]", SCREEN_W / 2 - 205, SCREEN_H / 2 + 10, text_white);
 		}
 	}
-	/* ================= 💎 STATE_UPGRADE: 상점 대개편 완료 ================= */
+	/*  STATE_UPGRADE: 상점 */
 	else if (g->state == STATE_UPGRADE) {
 		SDL_Color shop_pink_main = { 255, 121, 198, 255 };
 		SDL_Color text_dark_cocoa = { 85, 55, 65, 255 };
@@ -272,19 +290,22 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_SetRenderDrawColor(ren, shop_pink_main.r, shop_pink_main.g, shop_pink_main.b, 255);
 		SDL_RenderDrawRect(ren, &shopBg);
 
-		sprintf_s(shopBuf, sizeof(shopBuf), "💖 컴파일 커피 정비소 - DAY %d 💖", g->day);
+		sprintf_s(shopBuf, sizeof(shopBuf), "💖 컴파일 커피 상점 - DAY %d 💖", g->day);
 		draw_text(ren, g_fnt_lg, shopBuf, 70, 55, shop_pink_main);
 
-		sprintf_s(shopBuf, sizeof(shopBuf), "보유 자산: 🪙 %d원  |  🫘:%d  🥛:%d  🍯:%d  🥛+:%d  🧊:%d",
+		// 실시간 자산 / 원자재
+		sprintf_s(shopBuf, sizeof(shopBuf), "보유 자산: %d원  |  원두:%d  우유:%d  시럽:%d  크림:%d  얼음:%d",
 			g->balance, g->stock[ING_BEAN], g->stock[ING_MILK], g->stock[ING_SYRUP], g->stock[ING_CREAM], g->stock[ING_ICE]);
 		draw_text(ren, g_fnt_md, shopBuf, 70, 95, shop_pink_main);
 
+		// 상점 메인 탭 1
 		SDL_Rect tab1 = { 70, 130, 180, 30 };
 		if (g->shop_page == 0) SDL_SetRenderDrawColor(ren, shop_pink_main.r, shop_pink_main.g, shop_pink_main.b, 255);
 		else SDL_SetRenderDrawColor(ren, 200, 170, 180, 255);
 		SDL_RenderFillRect(ren, &tab1);
 		draw_text(ren, g_fnt_sm, "[◀] 1. 장비 & 재고 구매", 85, 137, text_white);
 
+		// 상점 메인 탭 2
 		SDL_Rect tab2 = { 260, 130, 180, 30 };
 		if (g->shop_page == 1) SDL_SetRenderDrawColor(ren, shop_pink_main.r, shop_pink_main.g, shop_pink_main.b, 255);
 		else SDL_SetRenderDrawColor(ren, 200, 170, 180, 255);
@@ -298,15 +319,18 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_RenderDrawRect(ren, &NPCBubble);
 
 		if (g->shop_page == 0) {
-			draw_text(ren, g_fnt_md, "👩 [점장 고양이]: \"재고 품목이 늘어났다냥! 시럽, 크림, 얼음도 든든하게 비축하라냥!\"", 95, 185, text_dark_cocoa);
+			draw_text(ren, g_fnt_md, "👩 [점장]: \"재고 품목을 구매하세요! 시럽, 크림, 얼음도 든든하게 비축하세요!\"", 95, 185, text_dark_cocoa);
 		}
 		else {
-			draw_text(ren, g_fnt_md, "👩 [점장 고양이]: \"최종 사니처 메뉴 '카라멜마끼아또' 연구 슬롯이 열렸다냥! 연구하라냥!\"", 95, 185, text_dark_cocoa);
+			draw_text(ren, g_fnt_md, "👩 [점장]: \"최종 시그니처 메뉴 '카라멜마끼아또' 해금에 도전하세요! 화이팅!\"", 95, 185, text_dark_cocoa);
 		}
 
 		int gap = 8; int card_w = 175; int card_h = 160; int x0 = 65;
 
+		// 상점 1페이지 렌더링
 		if (g->shop_page == 0) {
+
+			// 슬롯 확장
 			SDL_Rect rc0 = { x0, 230, card_w, card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc0);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc0);
@@ -314,6 +338,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "보유: %d/%d", g->slot_count, g->upg[0].max_level); draw_text(ren, g_fnt_sm, shopBuf, x0 + 10, 270, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "비용: 3,000원", x0 + 10, 330, shop_pink_main);
 
+			// 머신 속도 강화
 			int x1 = x0 + card_w + gap; SDL_Rect rc1 = { x1, 230, card_w, card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc1);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc1);
@@ -321,7 +346,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "등급: Lv.%d/%d", g->upg[1].level, g->upg[1].max_level); draw_text(ren, g_fnt_sm, shopBuf, x1 + 10, 270, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "비용: 25,000원", x1 + 10, 330, shop_pink_main);
 
-			// 🎯 [재고 가시성 완치]: 어색한 "고:" 머리띠를 다 밀어버리고 정식 "재고: x개" 레이아웃 이식
+			// 원두 자루 
 			int x2 = x1 + card_w + gap; SDL_Rect rc2 = { x2, 230, card_w, card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc2);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc2);
@@ -329,6 +354,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "재고: %d개 보유중", g->stock[ING_BEAN]); draw_text(ren, g_fnt_sm, shopBuf, x2 + 10, 270, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "비용: 1,500원", x2 + 10, 330, shop_pink_main);
 
+			// 우유 묶음
 			int x3 = x2 + card_w + gap; SDL_Rect rc3 = { x3, 230, card_w, card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc3);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc3);
@@ -338,6 +364,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 
 			int y_row2 = 400; int card_h2 = 110;
 
+			// 시럽 보틀
 			SDL_Rect rc6 = { x0, y_row2, card_w, card_h2 };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc6);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc6);
@@ -345,13 +372,15 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "재고: %d개 보유중", g->stock[ING_SYRUP]); draw_text(ren, g_fnt_sm, shopBuf, x0 + 10, y_row2 + 35, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "비용: 1,200원", x0 + 10, y_row2 + 75, shop_pink_main);
 
+			// 휘핑 크림
 			SDL_Rect rc7 = { x1, y_row2, card_w, card_h2 };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc7);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc7);
-			draw_text(ren, g_fnt_sm, "🥛+ 휘핑 크림(x10)", x1 + 10, y_row2 + 10, shop_pink_main);
+			draw_text(ren, g_fnt_sm, "🥛 휘핑 크림(x10)", x1 + 10, y_row2 + 10, shop_pink_main);
 			sprintf_s(shopBuf, sizeof(shopBuf), "재고: %d개 보유중", g->stock[ING_CREAM]); draw_text(ren, g_fnt_sm, shopBuf, x1 + 10, y_row2 + 35, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "비용: 1,400원", x1 + 10, y_row2 + 75, shop_pink_main);
 
+			// 얼음
 			SDL_Rect rc8 = { x2, y_row2, card_w, card_h2 };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc8);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc8);
@@ -359,9 +388,12 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "재고: %d개 보유중", g->stock[ING_ICE]); draw_text(ren, g_fnt_sm, shopBuf, x2 + 10, y_row2 + 35, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "비용: 800원", x2 + 10, y_row2 + 75, shop_pink_main);
 		}
+
+		// 상점 2페이지 렌더링
 		else {
 			int card_y = 235; int big_card_w = 230; int big_card_h = 175; int big_gap = 15;
 
+			// 바닐라라떼 레시피
 			SDL_Rect rc4 = { x0, card_y, big_card_w, big_card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc4);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc4);
@@ -369,6 +401,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "연구: %s", g_menu[MENU_VANILLA_LATTE].unlocked ? "🔓 완료" : "🔒 잠김"); draw_text(ren, g_fnt_sm, shopBuf, x0 + 15, card_y + 55, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "연구비: 6,000원", x0 + 15, card_y + 115, shop_pink_main);
 
+			// 콜드브루 레시피
 			int x1 = x0 + big_card_w + big_gap; SDL_Rect rc5 = { x1, card_y, big_card_w, big_card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc5);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc5);
@@ -376,78 +409,78 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 			sprintf_s(shopBuf, sizeof(shopBuf), "연구: %s", g_menu[MENU_COLD_BREW].unlocked ? "🔓 완료" : "🔒 잠김"); draw_text(ren, g_fnt_sm, shopBuf, x1 + 15, card_y + 55, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "연구비: 9,000원", x1 + 15, card_y + 115, shop_pink_main);
 
+			// 카라멜마끼아또 레시피
 			int x2 = x1 + big_card_w + big_gap; SDL_Rect rc9 = { x2, card_y, big_card_w, big_card_h };
 			SDL_SetRenderDrawColor(ren, light_pink_card.r, light_pink_card.g, light_pink_card.b, 255); SDL_RenderFillRect(ren, &rc9);
 			SDL_SetRenderDrawColor(ren, pink_border.r, pink_border.g, pink_border.b, 255); SDL_RenderDrawRect(ren, &rc9);
-			draw_text(ren, g_fnt_sm, "✨ 카라멜마끼아또 해금", x2 + 15, card_y + 15, shop_pink_main);
+			draw_text(ren, g_fnt_sm, "✨ 카라멜마끼아또 레시피", x2 + 15, card_y + 15, shop_pink_main);
 			sprintf_s(shopBuf, sizeof(shopBuf), "연구: %s", g_menu[MENU_CARAMEL_MAC].unlocked ? "🔓 완료" : "🔒 잠김"); draw_text(ren, g_fnt_sm, shopBuf, x2 + 15, card_y + 55, text_dark_cocoa);
 			draw_text(ren, g_fnt_sm, "연구비: 12,000원", x2 + 15, card_y + 115, shop_pink_main);
 		}
 
 		SDL_Rect bottomGuide = { 70, 520, SCREEN_W - 140, 35 };
 		SDL_SetRenderDrawColor(ren, 255, 150, 180, 255); SDL_RenderFillRect(ren, &bottomGuide);
-		draw_text(ren, g_fnt_sm, "➔ 키보드 [◀]/[▶] 방향키로 상점 페이지 전환! 정비 완료 후 [Enter] 영업 개시", 90, 530, text_white);
+		draw_text(ren, g_fnt_sm, "➔ 키보드 [<-]/[->] 방향키로 상점 페이지 전환! 정비 완료 후 [Enter] 영업 개시", 90, 530, text_white);
 
-		// 🎯 [잔상 로그 파괴 완치]: 상점 모듈 내부일 땐 하단에 인게임용 겹침 로그가 절대 뜨지 않도록 완벽 필터 아웃!
 	}
 
-	/* ================= 🏆 STATE_HIGHSCORE: 대우승(성공) 엔딩 창 화면 ================= */
+	/* STATE_HIGHSCORE: 우승(성공) 엔딩 창 화면  */
 	else if (g->state == STATE_HIGHSCORE) {
 		draw_game_background(ren);
 
 		SDL_Rect winFrame = { 150, 100, SCREEN_W - 300, 420 };
 		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(ren, 27, 38, 59, 245); // 고급스러운 로열 네이비 톤 장막
+		SDL_SetRenderDrawColor(ren, 27, 38, 59, 245);
 		SDL_RenderFillRect(ren, &winFrame);
 		SDL_SetRenderDrawColor(ren, 254, 202, 87, 255);
 		SDL_RenderDrawRect(ren, &winFrame);
 
-		draw_text(ren, g_fnt_lg, "🎉 대 승 리 ! 축 하 합 니 다 🎉", SCREEN_W / 2 - 160, 140, text_gold);
+		draw_text(ren, g_fnt_lg, "🎉 승 리 ! 축 하 합 니 다 🎉", SCREEN_W / 2 - 160, 140, text_gold);
 
 		char endBuf[256];
 		sprintf_s(endBuf, sizeof(endBuf), "최종 경영 정산 자산: 🪙 %d원", g->balance);
 		draw_text(ren, g_fnt_md, endBuf, 240, 220, text_white);
-		draw_text(ren, g_fnt_sm, "선아 점장님의 카페가 15일 만에 업계 최고의 명품 핫플레이스로 등극했다냥!", 240, 270, text_gold);
+		draw_text(ren, g_fnt_sm, "점장님의 카페가 15일 만에 업계 최고의 명품 핫플레이스로 등극했어요!", 240, 270, text_gold);
 		draw_text(ren, g_fnt_sm, "목표 120만원을 가뿐히 돌파하여 억대 연봉 바리스타 타이틀을 쟁취했습니다.", 240, 300, text_white);
 
-		// 🎯 버튼 1: [게임 다시 하기] (X: 250 ~ 430, Y: 390 ~ 440)
+		// 다시 하기
 		SDL_Rect btnRetry = { 250, 390, 180, 50 };
-		SDL_SetRenderDrawColor(ren, 46, 204, 113, 255); // 화사한 초록색
+		SDL_SetRenderDrawColor(ren, 46, 204, 113, 255); 
 		SDL_RenderFillRect(ren, &btnRetry);
 		draw_text(ren, g_fnt_md, "🔄 다시 하기", 285, 402, text_white);
 
-		// 🎯 버튼 2: [홈으로 가기] (X: 530 ~ 710, Y: 390 ~ 440)
+		// 홈으로
 		SDL_Rect btnHome = { 530, 390, 180, 50 };
 		SDL_SetRenderDrawColor(ren, 115, 80, 60, 255);
 		SDL_RenderFillRect(ren, &btnHome);
 		draw_text(ren, g_fnt_md, "🏠 홈 으 로", 575, 402, text_white);
 	}
-	/* ================= ❌ STATE_GAMEOVER: 달성 실패 엔딩 창 화면 ================= */
+	/* STATE_GAMEOVER: 달성 실패 엔딩 창 화면 */
 	else if (g->state == STATE_GAMEOVER) {
 		draw_game_background(ren);
 
 		SDL_Rect loseFrame = { 150, 100, SCREEN_W - 300, 420 };
 		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
-		SDL_SetRenderDrawColor(ren, 44, 24, 24, 245); // 쓸쓸한 다크 블러드 와인 톤 장막
+		SDL_SetRenderDrawColor(ren, 44, 24, 24, 245); 
 		SDL_RenderFillRect(ren, &loseFrame);
 		SDL_SetRenderDrawColor(ren, 231, 76, 60, 255);
 		SDL_RenderDrawRect(ren, &loseFrame);
 
-		draw_text(ren, g_fnt_lg, "😭 미션 실패 ! 다시 도전하라냥 😭", SCREEN_W / 2 - 170, 140, (SDL_Color) { 231, 76, 60, 255 });
+		draw_text(ren, g_fnt_lg, "😭 미션 실패 ! 다시 도전하세요! 😭", SCREEN_W / 2 - 170, 140, (SDL_Color) { 231, 76, 60, 255 });
 
 		char endBuf[256];
-		sprintf_s(endBuf, sizeof(endBuf), "최종 경영 정산 자산: 🪙 %d원 (목표액: 1,200,000원)", g->balance);
+		sprintf_s(endBuf, sizeof(endBuf), "최종 경영 정산 자산: %d원 (목표액: 1,200,000원)", g->balance);
 		draw_text(ren, g_fnt_md, endBuf, 220, 220, text_white);
-		draw_text(ren, g_fnt_sm, "아쉽게도 제한 일수 15일 이내에 목표 자금 120만원을 달성하지 못했다냥.", 220, 270, text_white);
-		draw_text(ren, g_fnt_sm, "재고 낭비를 줄이고, 미식가의 특급 팁을 노려 고마진 메뉴를 더 연구해보라냥!", 220, 300, text_gold);
+		draw_text(ren, g_fnt_sm, "아쉽게도 제한 일수 15일 이내에 목표 자금 120만원을 달성하지 못했어요.", 220, 270, text_white);
+		draw_text(ren, g_fnt_sm, "재고 낭비를 줄이고, 미식가의 특급 팁을 노려 메뉴를 더 연구해보세요!", 220, 300, text_gold);
 
-		// 🎯 버튼 1: [게임 다시 하기] (X: 250 ~ 430, Y: 390 ~ 440)
+		// 다시 하기
 		SDL_Rect btnRetry = { 250, 390, 180, 50 };
-		SDL_SetRenderDrawColor(ren, 231, 76, 60, 255); // 붉은색 아크릴 버튼
+		SDL_SetRenderDrawColor(ren, 231, 76, 60, 255); 
 		SDL_RenderFillRect(ren, &btnRetry);
 		draw_text(ren, g_fnt_md, "🔄 다시 하기", 285, 402, text_white);
 
-		// 🎯 버튼 2: [홈으로 가기] (X: 530 ~ 710, Y: 390 ~ 440)
+		// 홈으로
 		SDL_Rect btnHome = { 530, 390, 180, 50 };
 		SDL_SetRenderDrawColor(ren, 115, 80, 60, 255);
 		SDL_RenderFillRect(ren, &btnHome);

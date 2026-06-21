@@ -139,14 +139,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\brew.h" />
     <ClInclude Include="..\common.h" />
     <ClInclude Include="..\customer.h" />
     <ClInclude Include="..\game.h" />
     <ClInclude Include="..\render.h" />
     <ClInclude Include="..\save.h" />
     <ClInclude Include="..\shop.h" />
-    <ClInclude Include="..\upgrade.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

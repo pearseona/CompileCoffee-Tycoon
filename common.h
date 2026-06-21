@@ -1,4 +1,3 @@
-// 공통 데이터 정의 모듈
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -10,31 +9,28 @@
 #include <string.h>
 #include <time.h>
 
-/* 화면 & 프레임 세팅 */
+// 화면 & 프레임 세팅 
 #define SCREEN_W        960
 #define SCREEN_H        620
 #define FPS             60
 #define FRAME_DELAY     (1000 / FPS)
 
-/* 게임 상수 */
+// 게임 상수 
 #define MAX_QUEUE 8 // 손님 대기열
 #define MAX_BREW_SLOTS 3 // 업그레이드 가능한 제조 슬롯
 #define MAX_MENU 6 // 아메리카노, 라떼 등 메뉴 6종
 #define MAX_INGREDIENT 5 // 원두, 우유, 시럽, 크림, 얼음
 
-// 🎯 [기획 동기화]: 총 영업일수를 15일로 칼같이 수정 완료!
-#define MAX_DAYS 15 
-#define DAY_SEC 45 // 하루 영업 시간; 실시간 45초
+#define MAX_DAYS 15  // 영업 일수
+#define DAY_SEC 45 // 하루 영업 시간
 
-#define COMBO_TIMEOUT_MS 7000 // 콤보 유지 시간 제한 (7초)
-#define COMBO_COOL_DOWN_MS 5000 // 콤보 잠금 해제까지 걸리는 시간 (5초)
+#define COMBO_TIMEOUT_MS 7000 // 콤보 유지 시간 제한 
+#define COMBO_COOL_DOWN_MS 5000 // 콤보 잠금 해제까지 걸리는 시간 
 #define LOG_MAX 6 // 인게임 HUD에 노출할 최근 로그 수
 #define MAX_LOG_LINES LOG_MAX
 
-// 🎯 [기획 동기화]: 최종 우승 마일스톤 조건을 120만원으로 연동!
-#define GOAL_PROFIT 1200000 
+#define GOAL_PROFIT 1200000 // 최종 우승 조건 금액
 
-// 🎯 [에러 치료 핵심]: customer.c가 선언되지 않은 식별자로 헤매지 않도록 공통 상수로 완전 바인딩!
 #define SPAWN_INTERVAL_MS 7000
 
 /* 열거형(Enum) 정의*/
@@ -47,7 +43,7 @@ typedef enum {
     STATE_CLOSING,
     STATE_UPGRADE,
     STATE_GAMEOVER,
-    STATE_HIGHSCORE, // 🏆 대우승(성공) 화면용 상태 맵으로 바인딩 활용
+    STATE_HIGHSCORE, 
     STATE_QUIT
 } GameState;
 
@@ -103,7 +99,7 @@ typedef struct {
     int id;
     CustType type;
     MenuID order;
-    int patience_ms; // 실시간 감소할 인내심 수치
+    int patience_ms;
     int patience_max;
     int active;
     int served; // 상태 정산: 1=만족 서빙 완료, -1=기다리다 이탈
