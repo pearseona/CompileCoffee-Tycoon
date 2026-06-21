@@ -22,12 +22,12 @@
 #define MAX_MENU 6 // 아메리카노, 라떼 등 메뉴 6종
 #define MAX_INGREDIENT 5 // 원두, 우유, 시럽, 크림, 얼음
 #define MAX_DAYS 20 // 총 플레이 타임라인 20일
-#define DAY_SEC 90 // 하루 영업 시간; 실시간 90초
+#define DAY_SEC 60 // 하루 영업 시간; 실시간 60초
 #define COMBO_TIMEOUT_MS 7000 // 콤보 유지 시간 제한 (7초)
 #define COMBO_COOL_DOWN_MS 5000 // 콤보 잠금 해제까지 걸리는 시간 (5초)
 #define LOG_MAX 6 // 인게임 HUD에 노출할 최근 로그 수
 #define MAX_LOG_LINES LOG_MAX
-#define GOAL_PROFIT 1500000 // 최종 승리 조건: 누적 순이익 150만원
+#define GOAL_PROFIT 1000000 // 최종 승리 조건: 누적 순이익 100만원
 
 /* 열거형(Enum) 정의*/
 

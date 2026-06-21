@@ -220,7 +220,7 @@ void game_update(Game* g, Uint32 dt) {
 				// 재고가 없는데 아직 쿨타임이 가동되지 않았다면 타이머 세팅
 				if (!g->is_refilling[i]) {
 					g->is_refilling[i] = 1;
-					g->stock_refill_ms[i] = 5000; // 5초 쿨타임 스타트
+					g->stock_refill_ms[i] = 3000; // 3초 쿨타임 스타트
 					log_push(g, (i == ING_BEAN) ? "⚠️ 원두 고갈! 퀵 오토바이 배달 요청 중..." : "⚠️ 우유 고갈! 긴급 퀵 배달 요청 중...");
 				}
 
