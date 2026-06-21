@@ -1,7 +1,9 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "common.h"
 #include "customer.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /* 대기열 및 타이머 초기화 */
 void cust_init(Game* g) {
@@ -15,10 +17,10 @@ void cust_init(Game* g) {
 void cust_spawn(Game* g, Uint32 dt) {
 	g->spawn_timer_ms += dt;
 
-	/* 🎯 [다형성 스폰 속도 변동 테이블 연동]: 피크타임 종류에 따라 스폰 주기 한계선 동적 축소 */
+	/* [다형성 스폰 속도 변동 테이블 연동]: 피크타임 종류에 따라 스폰 주기 한계선 동적 축소 */
 	int current_spawn_interval = SPAWN_INTERVAL_MS; // 디폴트 7초
 
-	if (g->event_ms > 0) {
+	if (g->event_ms > 0 && g->event_msg[0] != '\0') {
 		if (strcmp(g->event_msg, "RUSH_WORKER") == 0 || strcmp(g->event_msg, "RUSH_STUDENT") == 0) {
 			current_spawn_interval = 3200; // 🔥 러시 타임엔 3.2초마다 손님이 폭풍처럼 쏟아짐!
 		}
@@ -32,18 +34,19 @@ void cust_spawn(Game* g, Uint32 dt) {
 			if (g->queue[i].active == 0) {
 				g->queue[i].active = 1;
 
-				/* 🎯 오늘의 테마에 따라 스폰될 손님 클래스를 확정적으로 유도 */
+				/* 🎯 [확률 정화 시스템]: 러시 활성화 상태가 아니면 무조건 1/3 균등 분기 배정! */
 				CustType new_type;
-				if (g->event_ms > 0 && strcmp(g->event_msg, "RUSH_WORKER") == 0) {
+				if (g->event_ms > 0 && g->event_msg[0] != '\0' && strcmp(g->event_msg, "RUSH_WORKER") == 0) {
 					// 직장인 러시일 땐 80% 확률로 직장인 스폰 유도
 					new_type = (rand() % 100 < 80) ? CUST_WORKER : (CustType)(rand() % CUST_TYPE_COUNT);
 				}
-				else if (g->event_ms > 0 && strcmp(g->event_msg, "RUSH_STUDENT") == 0) {
+				else if (g->event_ms > 0 && g->event_msg[0] != '\0' && strcmp(g->event_msg, "RUSH_STUDENT") == 0) {
 					// 학생 러시일 땐 80% 확률로 학생 스폰 유도
 					new_type = (rand() % 100 < 80) ? CUST_STUDENT : (CustType)(rand() % CUST_TYPE_COUNT);
 				}
 				else {
-					new_type = (CustType)(rand() % CUST_TYPE_COUNT); // 평소엔 공평하게 랜덤
+					// 💡 [수정]: 평상시에는 3가지 유형의 클래스가 정확히 33.3%씩 균등 무작위 스폰되도록 보증!
+					new_type = (CustType)(rand() % 3);
 				}
 
 				g->queue[i].type = new_type;
@@ -52,7 +55,7 @@ void cust_spawn(Game* g, Uint32 dt) {
 				if (new_type == CUST_WORKER) {
 					g->queue[i].patience_max = 8000;
 					g->queue[i].order = (rand() % 2); // MENU_AMERICANO 또는 MENU_LATTE
-					log_push(g, "💼 [직장인] \"아점 커피 급해요! 2배 빨리 만들어라냥!\"");
+					log_push(g, "💼 [🚨] 직장인 \"아점 커피 급해요! 2배 빨리 만들어라냥!\"");
 				}
 				else if (new_type == CUST_FOODIE) {
 					g->queue[i].patience_max = 20000;
@@ -69,13 +72,13 @@ void cust_spawn(Game* g, Uint32 dt) {
 					else {
 						g->queue[i].order = MENU_LATTE;
 					}
-					log_push(g, "👑 [미식가] \"음료 퀄리티를 보러 왔다냥.\"");
+					log_push(g, "👑 [👑] 미식가 \"음료 퀄리티를 보러 왔다냥.\"");
 				}
 				else if (new_type == CUST_STUDENT) {
 					g->queue[i].patience_max = 15000;
 					MenuID stud_options[] = { MENU_AMERICANO, MENU_LATTE, MENU_ESPRESSO };
 					g->queue[i].order = stud_options[rand() % 3];
-					log_push(g, "🎓 [학생] \"주머니 사정이 가볍다냥. 열공 모드 충전!\"");
+					log_push(g, "🎓 [🎓] 학 생 \"주머니 사정이 가볍다냥. 열공 모드 충전!\"");
 				}
 
 				// 인내심 초기화
