@@ -74,7 +74,8 @@ int main(int argc, char* argv[]) {
 	myGame.sel_cust = -1;
 	myGame.sel_menu = -1;
 
-	game_start_day(&myGame);
+	// 🎯 [수정]: 시작하자마자 게임을 강제 개시하던 유도 코드를 주석 제거/수정하여 타이틀(STATE_MAIN) 단계에 고정!
+	myGame.state = STATE_MAIN;
 
 	printf("[컴파일 커피(Compile Coffee) - 실시간 로그] \n");
 
@@ -93,8 +94,27 @@ int main(int argc, char* argv[]) {
 				int mx = ev.button.x;
 				int my = ev.button.y;
 
+				/* 🎯 [추가]: 메인 타이틀(STATE_MAIN) 화면 갈색 버튼 클릭 인터랙션 연산 */
+				if (myGame.state == STATE_MAIN) {
+					// 1. [게임 시작] 갈색 버튼 클릭 체크 (X: 380~580, Y: 340~395)
+					if (mx >= 380 && mx <= 580 && my >= 340 && my <= 395) {
+						game_start_day(&myGame);
+						printf("[INPUT] 타이틀 버튼 클릭 -> 게임 영업 개시!\n");
+					}
+					// 2. [게임 설명] 갈색 버튼 클릭 체크 (X: 380~580, Y: 420完整475)
+					else if (mx >= 380 && mx <= 580 && my >= 420 && my <= 475) {
+						myGame.state = STATE_TUTORIAL;
+						printf("[INPUT] 타이틀 버튼 클릭 -> 게임 설명 연동 전환\n");
+					}
+				}
+				/* 🎯 [추가]: 게임 설명(STATE_TUTORIAL) 화면 뷰어 전환 */
+				else if (myGame.state == STATE_TUTORIAL) {
+					// 게임 설명 화면에서는 화면 내 아무 데나 마우스 왼쪽 버튼을 클릭하면 다시 메인으로 컴백!
+					myGame.state = STATE_MAIN;
+					printf("[INPUT] 설명 가이드 창 종료 -> 메인 화면 복귀\n");
+				}
 				// 1. 인게임 영업 단계 플레이 클릭 처리
-				if (myGame.state == STATE_PLAYING) {
+				else if (myGame.state == STATE_PLAYING) {
 					bool clicked_slot = false;
 
 					// 머신 제조 슬롯 마우스 클릭 감지
@@ -206,8 +226,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
-			} // 🛠️ 오타 교정 완료: SDL_MOUSEBUTTONDOWN 블록이 완벽하게 독립 마감되는 지점!
-			else if (ev.type == SDL_KEYDOWN) { // 🛠️ 이제 마우스 클릭 감지와 대등한 분기(else if)로 안전 분리!
+			}
+			else if (ev.type == SDL_KEYDOWN) {
 				int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
 
 				switch (ev.key.keysym.sym) {
@@ -353,7 +373,10 @@ int main(int argc, char* argv[]) {
 		Uint32 dt = currentTime - lastTime;
 
 		if (dt >= FRAME_DELAY) {
-			game_update(&myGame, dt);
+			// 게임 가동 중(PLAYING)일 때만 시간을 정상 흐르게 예외 제어
+			if (myGame.state == STATE_PLAYING) {
+				game_update(&myGame, dt);
+			}
 			render_frame(ren, &myGame);
 			lastTime = currentTime;
 		}
