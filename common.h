@@ -180,6 +180,9 @@ typedef struct {
     // 상점 페이지 내비게이션 상태 변수
     int shop_page;
 
+    // 🎯 [추가] 인게임 실시간 백엔드 타이머 동결용 일시정지 제어 플래그 
+    int is_paused;
+
     // 🎯 [메모리 안정성 패치]: 80바이트에서 128바이트로 버퍼 공간 대폭 확장! (한글 로그 크래시 예방)
     char log_lines[LOG_MAX][128];
     Uint32 log_ttl[LOG_MAX];
@@ -216,7 +219,7 @@ void brew_cancel(Game* g, int slot_idx);
 
 // upgrade.c
 void upg_init(Game* g);
-// void upg_buy(Game* g, int idx);
+// void upg_buy(Game[idx]);
 
 // save.c
 void save_record(Game* g);

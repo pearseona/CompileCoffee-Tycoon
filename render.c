@@ -118,16 +118,14 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 
 	/* ================= 🎯 [STATE_MAIN]: 타이틀 메인 로직 추가 분기 ================= */
 	if (g->state == STATE_MAIN) {
-		draw_game_background(ren); // 1. 일질감 제거를 위한 background.png 100% 재활용
+		draw_game_background(ren);
 
-		// 대형 감성 타이틀 흐림 막 투척
 		SDL_Rect titleShadow = { SCREEN_W / 2 - 240, 160, 480, 60 };
 		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 		SDL_SetRenderDrawColor(ren, 26, 18, 14, 200);
 		SDL_RenderFillRect(ren, &titleShadow);
 		draw_text(ren, g_fnt_lg, "☕ 컴파일 커피 (Compile Coffee) ☕", SCREEN_W / 2 - 215, 175, text_gold);
 
-		// 📦 [버튼 1]: 게임 시작 (갈색 사각형 배치)
 		SDL_Rect btnStart = { 380, 340, 200, 55 };
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderFillRect(ren, &btnStart);
@@ -135,7 +133,6 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_RenderDrawRect(ren, &btnStart);
 		draw_text(ren, g_fnt_md, "▶ 게임 시작", 432, 356, text_white);
 
-		// 📦 [버튼 2]: 게임 설명 (동일 밸런스 갈색 배치)
 		SDL_Rect btnTutorial = { 380, 420, 200, 55 };
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderFillRect(ren, &btnTutorial);
@@ -145,9 +142,8 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 	}
 	/* ================= 🎯 [STATE_TUTORIAL]: 게임 설명 뷰어 추가 분기 ================= */
 	else if (g->state == STATE_TUTORIAL) {
-		draw_game_background(ren); // 배경 일치 유지
+		draw_game_background(ren);
 
-		// 🎴 반투명 가독성 다크 코코아 대형 아크릴 판넬 거치
 		SDL_Rect tutorialPanel = { 80, 70, SCREEN_W - 160, SCREEN_H - 140 };
 		SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
 		SDL_SetRenderDrawColor(ren, 33, 24, 18, 245);
@@ -155,7 +151,6 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
 		SDL_RenderDrawRect(ren, &tutorialPanel);
 
-		// 핵심 조작법 및 승리 가이드 텍스트 레이아웃
 		draw_text(ren, g_fnt_lg, "☕ 컴파일 커피 - 완벽 경영 도움말 ☕", 120, 100, text_gold);
 
 		SDL_Color txtGray = { 220, 221, 230, 255 };
@@ -198,7 +193,7 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		SDL_SetRenderDrawColor(ren, 64, 48, 38, 255);
 		SDL_RenderFillRect(ren, &timeBarBg);
 
-		float time_ratio = (float)g->day_ms / 60000.0f; // 60초 압축 비율 동기화
+		float time_ratio = (float)g->day_ms / 60000.0f;
 		if (time_ratio < 0.0f) time_ratio = 0.0f;
 		if (time_ratio > 1.0f) time_ratio = 1.0f;
 		int time_curr_w = (int)(bar_max_w * time_ratio);
@@ -215,9 +210,29 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		sprintf_s(uiBuf, sizeof(uiBuf), "%02d:%02d", display_m, display_s);
 		draw_text(ren, g_fnt_md, uiBuf, 750, 24, text_white);
 
-		SDL_Rect decorationIcon = { SCREEN_W - 48, 20, 30, 30 };
-		SDL_SetRenderDrawColor(ren, 225, 112, 85, 255);
-		SDL_RenderFillRect(ren, &decorationIcon);
+		/* 🎯 [대개조]: 우측 상단 오토바이 주황색 아이콘을 밀어내고, 갈색 컨트롤 버튼 쌍 구축 */
+		/* 🎯 [최종 정밀 밸런스 패치]: 글자 도화지 버퍼(Surface)의 하단 짤림을 막기 위한 좌표 최종 튜닝 */
+
+		// 1. [⏸️ 일시정지] 버튼 그리기
+		/* 🎯 [최종 컴팩트 밸런스 패치]: 이모지를 제거하고 순수 글씨에 딱 맞춘 타이트 셋업 */
+
+		// 1. [정지 / 재개] 컴팩트 버튼 (너비 52, 높이 26으로 글씨에 딱 맞게 축소)
+		SDL_Rect rPauseBtn = { 835, 20, 52, 26 };
+		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
+		SDL_RenderFillRect(ren, &rPauseBtn);
+		SDL_SetRenderDrawColor(ren, text_gold.r, text_gold.g, text_gold.b, 150);
+		SDL_RenderDrawRect(ren, &rPauseBtn);
+		// 내부 공백을 없애고 정중앙에 딱 정렬되도록 패딩 조정 (X: 846, Y: 24)
+		draw_text(ren, g_fnt_sm, g->is_paused ? "재개" : "정지", 846, 24, text_white);
+
+		// 2. [🏠 홈으로] 버튼 (정지 버튼 바로 오른쪽인 892 좌표로 완벽하게 밀착!)
+		SDL_Rect rHomeBtn = { 892, 20, 32, 26 };
+		SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 255);
+		SDL_RenderFillRect(ren, &rHomeBtn);
+		SDL_SetRenderDrawColor(ren, text_gold.r, text_gold.g, text_gold.b, 150);
+		SDL_RenderDrawRect(ren, &rHomeBtn);
+		// 홈 아이콘 위치 정밀 조율 (X: 900, Y: 24)
+		draw_text(ren, g_fnt_sm, "홈", 900, 24, text_white);
 
 		draw_customer_queue(ren, g);
 		draw_barista_slots(ren, g);
@@ -237,6 +252,23 @@ void render_frame(SDL_Renderer* ren, Game* g) {
 		}
 		else {
 			draw_text(ren, g_fnt_md, "어서오세요! 컴파일 커피가 정상 영업을 개시했습니다.", 25, 577, log_color);
+		}
+
+		/* 🎯 [추가] 일시정지 활성화 시 화면 전역 반투명 암전 가이드 장막 렌더링 */
+		if (g->is_paused) {
+			SDL_Rect pauseMask = { 0, 0, SCREEN_W, SCREEN_H };
+			SDL_SetRenderDrawBlendMode(ren, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(ren, 15, 10, 8, 210); // 부드러운 에스프레소 암전 장막
+			SDL_RenderFillRect(ren, &pauseMask);
+
+			SDL_Rect pauseCenterBox = { SCREEN_W / 2 - 250, SCREEN_H / 2 - 45, 500, 90 };
+			SDL_SetRenderDrawColor(ren, text_coffee_brown.r, text_coffee_brown.g, text_coffee_brown.b, 240);
+			SDL_RenderFillRect(ren, &pauseCenterBox);
+			SDL_SetRenderDrawColor(ren, text_gold.r, text_gold.g, text_gold.b, 255);
+			SDL_RenderDrawRect(ren, &pauseCenterBox);
+
+			draw_text(ren, g_fnt_md, "⏸️ 매장 운영이 일시 정지되었습니다.", SCREEN_W / 2 - 150, SCREEN_H / 2 - 28, text_gold);
+			draw_text(ren, g_fnt_sm, "[우측 상단의 ▶ 재개 버튼이나 단축키 'P'를 누르면 다시 흐릅니다]", SCREEN_W / 2 - 205, SCREEN_H / 2 + 10, text_white);
 		}
 	}
 	else if (g->state == STATE_UPGRADE) {

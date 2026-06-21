@@ -73,8 +73,9 @@ int main(int argc, char* argv[]) {
 	myGame.sel_slot = 0;
 	myGame.sel_cust = -1;
 	myGame.sel_menu = -1;
+	myGame.is_paused = 0; // 아침 플래그 클리닝
 
-	// 🎯 [수정]: 시작하자마자 게임을 강제 개시하던 유도 코드를 주석 제거/수정하여 타이틀(STATE_MAIN) 단계에 고정!
+	// 시작하자마자 게임을 강제 개시하던 유도 코드를 주석 제거/수정하여 타이틀(STATE_MAIN) 단계에 고정!
 	myGame.state = STATE_MAIN;
 
 	printf("[컴파일 커피(Compile Coffee) - 실시간 로그] \n");
@@ -94,27 +95,47 @@ int main(int argc, char* argv[]) {
 				int mx = ev.button.x;
 				int my = ev.button.y;
 
-				/* 🎯 [추가]: 메인 타이틀(STATE_MAIN) 화면 갈색 버튼 클릭 인터랙션 연산 */
+				/* 메인 타이틀(STATE_MAIN) 화면 갈색 버튼 클릭 인터랙션 연산 */
 				if (myGame.state == STATE_MAIN) {
-					// 1. [게임 시작] 갈색 버튼 클릭 체크 (X: 380~580, Y: 340~395)
 					if (mx >= 380 && mx <= 580 && my >= 340 && my <= 395) {
 						game_start_day(&myGame);
+						myGame.is_paused = 0; // 리셋
 						printf("[INPUT] 타이틀 버튼 클릭 -> 게임 영업 개시!\n");
 					}
-					// 2. [게임 설명] 갈색 버튼 클릭 체크 (X: 380~580, Y: 420完整475)
 					else if (mx >= 380 && mx <= 580 && my >= 420 && my <= 475) {
 						myGame.state = STATE_TUTORIAL;
 						printf("[INPUT] 타이틀 버튼 클릭 -> 게임 설명 연동 전환\n");
 					}
 				}
-				/* 🎯 [추가]: 게임 설명(STATE_TUTORIAL) 화면 뷰어 전환 */
+				/* 게임 설명(STATE_TUTORIAL) 화면 뷰어 전환 */
 				else if (myGame.state == STATE_TUTORIAL) {
-					// 게임 설명 화면에서는 화면 내 아무 데나 마우스 왼쪽 버튼을 클릭하면 다시 메인으로 컴백!
 					myGame.state = STATE_MAIN;
 					printf("[INPUT] 설명 가이드 창 종료 -> 메인 화면 복귀\n");
 				}
 				// 1. 인게임 영업 단계 플레이 클릭 처리
 				else if (myGame.state == STATE_PLAYING) {
+
+					// 🎯 [마우스 좌표 동기화 패치]: 작아진 버튼 크기에 맞춰 클릭 판정 범위 재조정!
+					// 정지 버튼 클릭 범위 감지 (X: 835 ~ 887, Y: 20 ~ 46)
+					if (mx >= 835 && mx <= 887 && my >= 20 && my <= 46) {
+						myGame.is_paused = !myGame.is_paused;
+						log_push(&myGame, myGame.is_paused ? "⏸️ 게임을 일시 정지했습니다." : "▶ 장사를 재개합니다.");
+						continue;
+					}
+					// 홈 버튼 클릭 범위 감지 (X: 892 ~ 924, Y: 20 ~ 46)
+					if (mx >= 892 && mx <= 924 && my >= 20 && my <= 46) {
+						myGame.state = STATE_MAIN;
+						myGame.is_paused = 0;
+						log_push(&myGame, "🏠 홈 타이틀 화면으로 돌아왔습니다.");
+						continue;
+					}
+
+					// 🎯 일시정지 상태일 때는 아래의 인게임 상호작용 클릭 처리를 완전 무시 스킵!
+					if (myGame.is_paused) {
+						log_push(&myGame, "⏸️ 일시정지 중에는 행동할 수 없다냥! 다시 눌러 해제하라냥.");
+						continue;
+					}
+
 					bool clicked_slot = false;
 
 					// 머신 제조 슬롯 마우스 클릭 감지
@@ -177,9 +198,8 @@ int main(int argc, char* argv[]) {
 						}
 					}
 				}
-				// 🎯 2. 상점 정비 단계(STATE_UPGRADE) 마우스 클릭 판정 통합
+				// 2. 상점 정비 단계(STATE_UPGRADE) 마우스 클릭 판정 통합
 				else if (myGame.state == STATE_UPGRADE) {
-					// 상점 상단 탭 가상 클릭 감지
 					if (my >= 130 && my <= 160) {
 						if (mx >= 70 && mx <= 250) {
 							myGame.shop_page = 0;
@@ -202,7 +222,6 @@ int main(int argc, char* argv[]) {
 					int x3 = x2 + card_w + gap;
 
 					if (myGame.shop_page == 0) {
-						// PAGE 0 카드 클릭
 						if (mx >= x0 && mx <= x0 + card_w && my >= card_y && my <= card_y + card_h) {
 							shop_buy_upgrade(&myGame, 0);
 						}
@@ -217,17 +236,21 @@ int main(int argc, char* argv[]) {
 						}
 					}
 					else {
-						// PAGE 1 카드 클릭 (신메뉴 해금)
 						if (mx >= x0 && mx <= x0 + card_w && my >= card_y && my <= card_y + card_h) {
-							shop_buy_upgrade(&myGame, 4); // 바닐라라떼 해금
+							shop_buy_upgrade(&myGame, 4);
 						}
 						else if (mx >= x1 && mx <= x1 + card_w && my >= card_y && my <= card_y + card_h) {
-							shop_buy_upgrade(&myGame, 5); // 콜드브루 해금
+							shop_buy_upgrade(&myGame, 5);
 						}
 					}
 				}
 			}
 			else if (ev.type == SDL_KEYDOWN) {
+				// 일시정지 중엔 키보드 단축키 액션도 철저히 동결 차단!
+				if (myGame.state == STATE_PLAYING && myGame.is_paused) {
+					continue;
+				}
+
 				int target_qi = (myGame.sel_cust >= 0) ? myGame.sel_cust : 0;
 
 				switch (ev.key.keysym.sym) {
@@ -355,6 +378,11 @@ int main(int argc, char* argv[]) {
 				case SDLK_BACKSPACE:
 					if (myGame.state == STATE_PLAYING && myGame.sel_slot >= 0) brew_cancel(&myGame, myGame.sel_slot);
 					break;
+				case SDLK_p: // 단축키 P로도 일시정지가 제어되도록 히든 꿀팁 가이드 추가!
+					if (myGame.state == STATE_PLAYING) {
+						myGame.is_paused = !myGame.is_paused;
+					}
+					break;
 				case SDLK_ESCAPE:
 					isRunning = false;
 					break;
@@ -373,8 +401,8 @@ int main(int argc, char* argv[]) {
 		Uint32 dt = currentTime - lastTime;
 
 		if (dt >= FRAME_DELAY) {
-			// 게임 가동 중(PLAYING)일 때만 시간을 정상 흐르게 예외 제어
-			if (myGame.state == STATE_PLAYING) {
+			// 🎯 [핵심 동결 트리거]: 플레이 중이면서, '일시정지가 아닐 때만' 백엔드 시뮬레이션 타이머 업데이터 작동!
+			if (myGame.state == STATE_PLAYING && !myGame.is_paused) {
 				game_update(&myGame, dt);
 			}
 			render_frame(ren, &myGame);
