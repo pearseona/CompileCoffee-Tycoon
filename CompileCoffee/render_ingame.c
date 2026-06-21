@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-#include "../common.h"
+#include "../common.h"     // 🎯 파일 꼬임 방지: 결합 주소 상대 기호 제거 연동 마스터링
 #include "../render.h"
 #include "../customer.h"
 
@@ -87,6 +87,26 @@ void draw_customer_queue(SDL_Renderer* ren, Game* g) {
 			SDL_RenderFillRect(ren, &bubbleRect);
 			SDL_SetRenderDrawColor(ren, 113, 128, 147, 255);
 			SDL_RenderDrawRect(ren, &bubbleRect);
+
+			// 🎯 [시각 고도화]: 머리 위의 탭 인터랙션에 성향 타이틀 표기
+			char tagStr[32] = "";
+			SDL_Color tagColor = { 47, 53, 66, 255 };
+
+			if (c_type == CUST_WORKER) {
+				sprintf_s(tagStr, sizeof(tagStr), "[급함] 직장인");
+				tagColor = (SDL_Color){ 231, 76, 60, 255 }; // 직장인은 긴장감 도는 레드
+			}
+			else if (c_type == CUST_FOODIE) {
+				sprintf_s(tagStr, sizeof(tagStr), "★VIP★ 미식가");
+				tagColor = (SDL_Color){ 243, 156, 18, 255 }; // 미식가는 프리미엄 골드
+			}
+			else if (c_type == CUST_STUDENT) {
+				sprintf_s(tagStr, sizeof(tagStr), "[할인] 학생");
+				tagColor = (SDL_Color){ 46, 204, 113, 255 }; // 학생은 청량한 그린
+			}
+
+			// 태그를 말풍선 위 좌표에 드로우
+			draw_text(ren, g_fnt_sm, tagStr, cx + 5, spot_y - 97, tagColor);
 
 			int gauge_x = bx + 4; int gauge_y = by + 5; int gauge_w = 7; int gauge_max_h = bubble_h - 10;
 			int gauge_curr_h = (int)(gauge_max_h * patience_ratio);

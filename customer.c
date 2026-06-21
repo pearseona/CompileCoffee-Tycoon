@@ -33,32 +33,33 @@ void cust_spawn(Game* g, Uint32 dt) {
 					// 직장인: 인내심 8초, 아메리카노 또는 라떼 주문
 					g->queue[i].patience_max = 8000;
 					g->queue[i].order = (rand() % 2); // MENU_AMERICANO 또는 MENU_LATTE
-					log_push(g, "바쁜 직장인이 입장했습니다! 서두르세요!");
+					log_push(g, "💼 [직장인] \"아점 커피 급해요! 2배 빨리 만들어라냥!\"");
 				}
 				else if (new_type == CUST_FOODIE) {
 					// 미식가: 인내심 20초, 잠금 해제된 프리미엄 메뉴 혹은 라떼 이상 주문
 					g->queue[i].patience_max = 20000;
-					
+
 					// 해금된 프리미엄 메뉴 목록 추리기
 					MenuID premium_pool[6];
 					int p_count = 0;
 					if (g_menu[MENU_VANILLA_LATTE].unlocked) premium_pool[p_count++] = MENU_VANILLA_LATTE;
 					if (g_menu[MENU_COLD_BREW].unlocked) premium_pool[p_count++] = MENU_COLD_BREW;
 					if (g_menu[MENU_CARAMEL_MAC].unlocked) premium_pool[p_count++] = MENU_CARAMEL_MAC;
-					
+
 					if (p_count > 0) {
 						g->queue[i].order = premium_pool[rand() % p_count];
-					} else {
+					}
+					else {
 						g->queue[i].order = MENU_LATTE;
 					}
-					log_push(g, "까다로운 미식가가 입장했습니다. 고급 음료를 주문합니다.");
+					log_push(g, "👑 [미식가] \"음료 퀄리티를 보러 왔다냥. 늦으면 국물도 없다냥.\"");
 				}
 				else if (new_type == CUST_STUDENT) {
 					// 학생: 인내심 15초, 아메리카노, 라떼, 에스프레소 주문
 					g->queue[i].patience_max = 15000;
 					MenuID stud_options[] = { MENU_AMERICANO, MENU_LATTE, MENU_ESPRESSO };
 					g->queue[i].order = stud_options[rand() % 3];
-					log_push(g, "할인 혜택이 필요한 학생이 입장했습니다.");
+					log_push(g, "🎓 [학생] \"주머니 사정이 가볍다냥. 열공 모드 충전!\"");
 				}
 
 				// 인내심 초기화
@@ -81,19 +82,23 @@ void game_serve_drink(Game* g, int customer_idx) {
 	int menu_price = g_menu[c->order].price;
 	int final_payout = menu_price;
 
+	/* 🎯 [다형성 비즈니스 로직]: 손님 유형별 정산 공식 연동 */
 	if (c->type == CUST_STUDENT) {
-		// 학생: 10% 할인
+		// 학생: 주머니 사정을 감안해 10% 장려 할인 반영
 		final_payout = (int)(menu_price * 0.9);
-		log_push(g, "학생 할인이 적용되었습니다. (-10%)");
+		g->reputation = clamp_i(g->reputation + 2, 0, 100); // 훈훈한 덤 평판
+		log_push(g, "🎓 학생 응원 10% 할인이 자동 정산되었습니다! (평판 +2)");
 	}
 	else if (c->type == CUST_FOODIE) {
-		// 미식가: 팁 1500원
-		final_payout = menu_price + 1500;
-		log_push(g, "미식가가 맛에 감동하여 팁을 주었습니다! (+1500원)");
+		// 미식가: 맛에 감동하여 기본 단가의 1.5배 금액 기부 (50% 팁 보너스 도파민 폭발)
+		final_payout = (int)(menu_price * 1.5);
+		g->reputation = clamp_i(g->reputation + 5, 0, 100); // 파워 인플루언서급 평판 폭등
+		log_push(g, "👑 미식가가 특급 퀄리티에 대만족하여 50% 팁을 투척했습니다! (평판 +5)");
 	}
 	else {
-		// 직장인: 정가 
-		log_push(g, "주문하신 음료 제공 완료!");
+		// 직장인: 정가 정산
+		g->reputation = clamp_i(g->reputation + 1, 0, 100);
+		log_push(g, "💼 직장인 서빙 성공! 업무에 복귀할 수 있어 안심합니다. (평판 +1)");
 	}
 
 	// 잔액 누적 계산
@@ -112,15 +117,50 @@ void cust_update(Game* g, Uint32 dt) {
 	// 현재 3개 자리의 손님들 인내심 차감
 	for (int i = 0; i < 3; i++) {
 		if (g->queue[i].active == 1) {
-			g->queue[i].patience_ms -= dt;
+			Customer* c = &g->queue[i];
 
-			// 인내심이 0이 된 경우 (Timeout)
-			if (g->queue[i].patience_ms <= 0) {
-				g->queue[i].active = 0; // 손님 퇴장
-				g->queue[i].served = -1; // 미서빙 이탈
+			/* 🎯 [다형성 AI 시스템]: 타입별 실시간 인내심 감소 배속 연산 */
+			if (c->type == CUST_WORKER) {
+				// 직장인: 성격 급함 ➔ 2배 속도로 차 올리는 타임어택의 억까
+				c->patience_ms -= (dt * 2);
+			}
+			else if (c->type == CUST_STUDENT) {
+				// 학생: 폰 보며 대기 ➔ 0.7배속으로 아주 여유롭게 대기
+				c->patience_ms -= (int)(dt * 0.7f);
+			}
+			else {
+				// 미식가 및 디폴트
+				c->patience_ms -= dt;
+			}
+
+			/* 🎯 미식가 전용 까다로운 중도 이탈(탈주) 필터링 */
+			if (c->type == CUST_FOODIE && c->patience_ms < (c->patience_max / 2)) {
+				c->active = 0;
+				c->served = -1;
+				g->combo = 0; // 콤보 브레이커
+				g->reputation = clamp_i(g->reputation - 4, 0, 100); // 무서운 평판 페널티
+
+				log_push(g, "❌ 미식가: \"절반이나 기다렸는데 소식이 없군요!\" (중도 탈주, 평판 -4)");
+				if (g->sel_cust == i) g->sel_cust = -1;
+				continue;
+			}
+
+			// 인내심이 0이 된 경우 (Timeout 일괄 처리)
+			if (c->patience_ms <= 0) {
+				c->active = 0; // 손님 퇴장
+				c->served = -1; // 미서빙 이탈
 				g->combo = 0; // 손님이 기다리다 지쳐서 떠나면 연속 콤보 초기화
 
-				log_push(g, "손님이 기다리다 지쳐서 떠났습니다...");
+				/* 🎯 탈주 시 페널티 다형성 차등 분기 */
+				if (c->type == CUST_WORKER) {
+					g->reputation = clamp_i(g->reputation - 6, 0, 100); // 지각한 직장인의 무서운 분노
+					log_push(g, "😡 [타임아웃] 직장인이 평판 테러를 남기고 광속 탈주했습니다! (평판 -6)");
+				}
+				else {
+					g->reputation = clamp_i(g->reputation - 2, 0, 100);
+					log_push(g, "😢 [타임아웃] 손님이 기다리다 지쳐서 가버렸습니다... (평판 -2)");
+				}
+
 				printf("[WARN] %d번 자리 손님 타임아웃 퇴장. 콤보가 초기화됩니다.\n", i + 1);
 				if (g->sel_cust == i) {
 					g->sel_cust = -1; // 선택된 손님 초기화
@@ -131,11 +171,11 @@ void cust_update(Game* g, Uint32 dt) {
 }
 
 /* 큐 인덱스로 손님 데이터 주소 반환 */
-Customer* cust_at(Game* g, int qi) { 
+Customer* cust_at(Game* g, int qi) {
 	if (qi >= 0 && qi < 3 && g->queue[qi].active) {
 		return &g->queue[qi];
 	}
-	return NULL; 
+	return NULL;
 }
 
 /* 제조 슬롯 완료 시 호출될 서빙 */
@@ -166,7 +206,7 @@ void cust_serve(Game* g, int slot_idx) {
 		else {
 			g->combo++;
 			g->combo_timer = COMBO_TIMEOUT_MS; // 일반 성공 시 콤보 유지 타이머 초기화
-			
+
 			if (g->combo == 3) {
 				// 3콤보가 되는 순간 5초 쿨다운 타이머 작동
 				g->combo_timer = 5000;

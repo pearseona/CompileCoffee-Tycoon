@@ -10,7 +10,7 @@
 #include <string.h>
 #include <time.h>
 
-/*  화면 & 프레임 세팅 */
+/* 화면 & 프레임 세팅 */
 #define SCREEN_W		960
 #define SCREEN_H        620
 #define FPS             60
@@ -180,8 +180,8 @@ typedef struct {
     // 상점 페이지 내비게이션 상태 변수
     int shop_page;
 
-    // 화면 HUD 실시간 로그 피드백
-    char log_lines[LOG_MAX][80];
+    // 🎯 [메모리 안정성 패치]: 80바이트에서 128바이트로 버퍼 공간 대폭 확장! (한글 로그 크래시 예방)
+    char log_lines[LOG_MAX][128];
     Uint32 log_ttl[LOG_MAX];
     int log_count;
 
@@ -230,6 +230,3 @@ void log_push(Game* g, const char* msg);
 int clamp_i(int v, int lo, int hi);
 
 #endif
-
-
-
